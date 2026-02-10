@@ -503,6 +503,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       els.checkBtn.textContent = 'Check Answer';
     }
+
+    animateQuestionEntrance();
   }
 
   function renderAnswerWidget(question, response) {
@@ -1179,6 +1181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     els.oralNextBtn.classList.add('hidden');
 
     startOralTimer();
+    animateQuestionEntrance();
   }
 
   function startOralTimer() {
@@ -1188,6 +1191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.oral.timerId = window.setInterval(() => {
       state.oral.secondsLeft -= 1;
       els.oralTimer.textContent = `${state.oral.secondsLeft}s`;
+      els.oralTimer.classList.toggle('urgent', state.oral.secondsLeft <= 6);
       if (state.oral.secondsLeft <= 0) {
         stopOralTimer();
         revealOralAnswer();
@@ -1200,6 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.clearInterval(state.oral.timerId);
       state.oral.timerId = null;
     }
+    els.oralTimer.classList.remove('urgent');
   }
 
   function revealOralAnswer() {
@@ -1464,6 +1469,11 @@ document.addEventListener('DOMContentLoaded', () => {
       els.feedbackShortScore.classList.add('hidden');
       els.feedbackShortScore.textContent = '';
     }
+
+    els.feedbackArea.classList.remove('feedback-pop');
+    window.requestAnimationFrame(() => {
+      els.feedbackArea.classList.add('feedback-pop');
+    });
   }
 
   function expectedOralAnswer(question) {
@@ -1520,7 +1530,26 @@ document.addEventListener('DOMContentLoaded', () => {
       view.classList.toggle('hidden-view', name !== viewName);
       view.classList.toggle('active-view', name === viewName);
     });
+    const active = els.views[viewName];
+    if (active) {
+      active.classList.remove('view-swap');
+      window.requestAnimationFrame(() => active.classList.add('view-swap'));
+    }
     state.view = viewName;
+  }
+
+  function animateQuestionEntrance() {
+    const shell = document.querySelector('.question-shell');
+    if (shell) {
+      shell.classList.remove('question-shell-swap');
+      window.requestAnimationFrame(() => shell.classList.add('question-shell-swap'));
+    }
+
+    const rows = els.answerArea.querySelectorAll('.option-card, .check-row, .match-row, .sequence-row');
+    rows.forEach((row, index) => {
+      row.style.setProperty('--stagger', String(index));
+      row.classList.add('stagger-in');
+    });
   }
 
   function updateSessionLabel() {

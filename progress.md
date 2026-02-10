@@ -47,3 +47,12 @@ Testing updates:
 - Fixed runtime regression (`updateCountCopy` missing).
 - Playwright client run passes with state output in `output/web-game-v4`.
 - Additional targeted Playwright check confirms oral mode starts and exports state/artifacts in `output/manual-checks`.
+
+Visual polish pass:
+- Introduced chartroom-themed visual direction with animated sky-grid background and richer panel/button treatments.
+- Added smooth question transition animations, staggered option reveal, feedback pulse, and oral timer urgency animation.
+- Added motion-safe fallback via `prefers-reduced-motion`.
+
+Validation:
+- Playwright run on polished style generated screenshots/state in `output/web-game-style-v1`.
+- Additional interaction check confirms post-answer feedback state captured in `output/manual-checks/animated-feedback.*`.
