@@ -1,482 +1,866 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- STATE ---
-    const state = {
-        view: 'config', // config, quiz, results
-        config: {
-            topic: 'all',
-            difficulty: 'mixed',
-            count: 10
-        },
-        quiz: {
-            questions: [],
-            currentIndex: 0,
-            score: 0,
-            answers: [] // Store user answers: { questionId: "...", attempted: boolean, correct: boolean, userResponse: any }
-        },
-        streak: 0
-    };
+  const DIFFICULTY_POINTS = { easy: 1, medium: 2, hard: 3 };
 
-    // --- DOM ELEMENTS ---
-    const els = {
-        views: {
-            config: document.getElementById('view-config'),
-            quiz: document.getElementById('view-quiz'),
-            results: document.getElementById('view-results')
-        },
-        config: {
-            topicGrid: document.getElementById('topic-selection'),
-            diffBtns: document.querySelectorAll('.pill-btn'),
-            countInput: document.getElementById('question-count'),
-            countVal: document.getElementById('q-count-val'),
-            startBtn: document.getElementById('start-btn')
-        },
-        quiz: {
-            progress: document.getElementById('quiz-progress'),
-            tag: document.getElementById('q-category-tag'),
-            number: document.getElementById('q-number'),
-            text: document.getElementById('question-text'),
-            optionsArea: document.getElementById('options-area'),
-            prevBtn: document.getElementById('prev-btn'),
-            checkBtn: document.getElementById('check-btn'),
-            nextBtn: document.getElementById('next-btn'),
-            quitBtn: document.getElementById('quit-btn'),
-            feedback: {
-                area: document.getElementById('feedback-area'),
-                title: document.getElementById('feedback-title'),
-                text: document.getElementById('feedback-text')
-            }
-        },
-        results: {
-            score: document.getElementById('final-score'),
-            subScore: document.getElementById('sub-score'),
-            restartBtn: document.getElementById('restart-btn')
-        },
-        streak: document.getElementById('streak-display')
-    };
+  const state = {
+    view: 'config',
+    config: {
+      topics: new Set(),
+      difficulty: 'mixed',
+      count: 12
+    },
+    quiz: {
+      questions: [],
+      responses: [],
+      currentIndex: 0,
+      scorePoints: 0,
+      possiblePoints: 0,
+      topicStats: {}
+    },
+    streak: 0,
+    lastWeakTopics: []
+  };
 
-    // --- INITIALIZATION ---
-    init();
+  const els = {
+    views: {
+      config: document.getElementById('view-config'),
+      quiz: document.getElementById('view-quiz'),
+      results: document.getElementById('view-results')
+    },
+    topicSelection: document.getElementById('topic-selection'),
+    difficultyButtons: Array.from(document.querySelectorAll('.pill-btn')),
+    countInput: document.getElementById('question-count'),
+    countCopy: document.getElementById('question-count-copy'),
+    startBtn: document.getElementById('start-btn'),
+    streakDisplay: document.getElementById('streak-display'),
+    sessionModeDisplay: document.getElementById('session-mode-display'),
 
-    function init() {
-        populateTopics();
-        setupEventListeners();
-        loadStreak();
+    progress: document.getElementById('quiz-progress'),
+    topicTag: document.getElementById('q-topic-tag'),
+    difficultyTag: document.getElementById('q-difficulty-tag'),
+    qIndex: document.getElementById('q-index'),
+    qType: document.getElementById('q-type-label'),
+    qText: document.getElementById('question-text'),
+    qContext: document.getElementById('question-context'),
+    answerArea: document.getElementById('answer-area'),
+
+    feedbackArea: document.getElementById('feedback-area'),
+    feedbackTitle: document.getElementById('feedback-title'),
+    feedbackBody: document.getElementById('feedback-body'),
+
+    prevBtn: document.getElementById('prev-btn'),
+    checkBtn: document.getElementById('check-btn'),
+    nextBtn: document.getElementById('next-btn'),
+    quitBtn: document.getElementById('quit-btn'),
+
+    finalScore: document.getElementById('final-score'),
+    finalSummary: document.getElementById('final-summary'),
+    finalGuidance: document.getElementById('final-guidance'),
+    topicPerformance: document.getElementById('topic-performance'),
+    missedReview: document.getElementById('missed-review'),
+    restartBtn: document.getElementById('restart-btn'),
+    retryWeakBtn: document.getElementById('retry-weak-btn')
+  };
+
+  init();
+
+  function init() {
+    loadStreak();
+    renderTopicButtons();
+    bindEvents();
+    updateCountCopy();
+    updateSessionLabel();
+    exposeTestingHooks();
+  }
+
+  function bindEvents() {
+    els.topicSelection.addEventListener('click', handleTopicSelection);
+
+    els.difficultyButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        els.difficultyButtons.forEach((b) => b.classList.remove('selected'));
+        button.classList.add('selected');
+        state.config.difficulty = button.dataset.difficulty;
+      });
+    });
+
+    els.countInput.addEventListener('input', () => {
+      state.config.count = Number(els.countInput.value);
+      updateCountCopy();
+    });
+
+    els.startBtn.addEventListener('click', startQuiz);
+    els.prevBtn.addEventListener('click', prevQuestion);
+    els.checkBtn.addEventListener('click', checkCurrentQuestion);
+    els.nextBtn.addEventListener('click', nextQuestion);
+    els.quitBtn.addEventListener('click', () => {
+      switchView('config');
+      updateSessionLabel();
+    });
+    els.restartBtn.addEventListener('click', () => {
+      switchView('config');
+      updateSessionLabel();
+    });
+    els.retryWeakBtn.addEventListener('click', retryWeakTopics);
+
+    document.addEventListener('keydown', handleKeyboardShortcuts);
+  }
+
+  function renderTopicButtons() {
+    const topics = uniqueTopics();
+    state.config.topics = new Set(topics);
+
+    els.topicSelection.innerHTML = '';
+
+    const allBtn = document.createElement('button');
+    allBtn.className = 'topic-btn selected';
+    allBtn.dataset.topic = 'all';
+    allBtn.textContent = 'Mix all topics';
+    els.topicSelection.appendChild(allBtn);
+
+    topics.forEach((topic) => {
+      const btn = document.createElement('button');
+      btn.className = 'topic-btn';
+      btn.dataset.topic = topic;
+      btn.textContent = topic;
+      els.topicSelection.appendChild(btn);
+    });
+  }
+
+  function handleTopicSelection(event) {
+    const button = event.target.closest('.topic-btn');
+    if (!button) {
+      return;
     }
 
-    // --- LOGIC: CONFIGURATION ---
-    function populateTopics() {
-        // Extract unique categories
-        const categories = [...new Set(questionBank.map(q => q.category))];
-        
-        // Add "Mix All" button
-        els.config.topicGrid.innerHTML = `
-            <button class="topic-btn selected" data-topic="all">Mix All Topics</button>
-        `;
+    const topic = button.dataset.topic;
+    const allActive = els.topicSelection.querySelector('[data-topic="all"]')?.classList.contains('selected');
 
-        categories.sort().forEach(cat => {
-            const btn = document.createElement('button');
-            btn.className = 'topic-btn';
-            btn.textContent = cat;
-            btn.dataset.topic = cat;
-            els.config.topicGrid.appendChild(btn);
-        });
+    if (topic === 'all') {
+      state.config.topics = new Set(uniqueTopics());
+      syncTopicButtons();
+      return;
     }
 
-    function setupEventListeners() {
-        // Topic Selection
-        els.config.topicGrid.addEventListener('click', (e) => {
-            if (e.target.classList.contains('topic-btn')) {
-                document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('selected'));
-                e.target.classList.add('selected');
-                state.config.topic = e.target.dataset.topic;
-            }
-        });
-
-        // Difficulty Selection
-        els.config.diffBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                els.config.diffBtns.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                state.config.difficulty = btn.dataset.diff;
-            });
-        });
-
-        // Question Count
-        els.config.countInput.addEventListener('input', (e) => {
-            els.config.countVal.textContent = e.target.value;
-            state.config.count = parseInt(e.target.value);
-        });
-
-        // Start Quiz
-        els.config.startBtn.addEventListener('click', startQuiz);
-
-        // Quiz Controls
-        els.quiz.checkBtn.addEventListener('click', checkAnswer);
-        els.quiz.nextBtn.addEventListener('click', nextQuestion);
-        els.quiz.prevBtn.addEventListener('click', prevQuestion);
-        els.quiz.quitBtn.addEventListener('click', quitQuiz);
-        
-        // Restart
-        els.results.restartBtn.addEventListener('click', () => switchView('config'));
+    if (allActive) {
+      state.config.topics = new Set([topic]);
+      syncTopicButtons();
+      return;
     }
 
-    function loadStreak() {
-        const saved = localStorage.getItem('ppl-streak');
-        if (saved) {
-            state.streak = parseInt(saved);
-            els.streak.textContent = state.streak;
-        }
+    if (state.config.topics.has(topic)) {
+      state.config.topics.delete(topic);
+    } else {
+      state.config.topics.add(topic);
     }
 
-    // --- LOGIC: QUIZ LIFECYCLE ---
-    function startQuiz() {
-        // Create a copy to avoid mutating the source
-        let filtered = [...questionBank];
-        
-        if (state.config.topic !== 'all') {
-            filtered = filtered.filter(q => q.category === state.config.topic);
+    if (state.config.topics.size === 0) {
+      state.config.topics = new Set(uniqueTopics());
+    }
+
+    syncTopicButtons();
+  }
+
+  function startQuiz() {
+    const sessionQuestions = buildSessionQuestions();
+
+    if (!sessionQuestions.length) {
+      alert('No questions match this setup. Try mixed difficulty or more topics.');
+      return;
+    }
+
+    state.quiz.questions = sessionQuestions;
+    state.quiz.responses = Array.from({ length: sessionQuestions.length }, () => ({
+      submitted: false,
+      correct: false,
+      answerPayload: null,
+      scoreWeight: 0
+    }));
+    state.quiz.currentIndex = 0;
+    state.quiz.scorePoints = 0;
+    state.quiz.possiblePoints = sessionQuestions.reduce((sum, q) => sum + questionWeight(q), 0);
+    state.quiz.topicStats = buildTopicStats(sessionQuestions);
+
+    switchView('quiz');
+    updateSessionLabel();
+    renderQuestion();
+  }
+
+  function buildSessionQuestions() {
+    const selectedTopics = state.config.topics;
+
+    const topicFiltered = QUESTION_BANK.filter((q) => selectedTopics.has(q.topic));
+    const diffFiltered = state.config.difficulty === 'mixed'
+      ? topicFiltered
+      : topicFiltered.filter((q) => q.difficulty === state.config.difficulty);
+
+    const shuffled = shuffleArray(diffFiltered);
+    const requested = state.config.count;
+
+    if (shuffled.length >= requested) {
+      return shuffled.slice(0, requested);
+    }
+
+    const fallbackPool = shuffleArray(topicFiltered.filter((q) => !shuffled.some((pick) => pick.id === q.id)));
+    return [...shuffled, ...fallbackPool].slice(0, requested);
+  }
+
+  function renderQuestion() {
+    const question = currentQuestion();
+    const response = currentResponse();
+
+    updateQuizMeta(question);
+
+    els.qType.textContent = questionTypeLabel(question.type);
+    els.qText.textContent = question.prompt;
+    els.qContext.textContent = question.context || '';
+
+    els.answerArea.innerHTML = '';
+    renderAnswerWidget(question, response);
+
+    els.feedbackArea.classList.toggle('hidden', !response.submitted);
+    if (response.submitted) {
+      renderFeedback(response.correct, question.explanation);
+    }
+
+    els.prevBtn.disabled = state.quiz.currentIndex === 0;
+    els.checkBtn.classList.toggle('hidden', response.submitted);
+    els.nextBtn.classList.toggle('hidden', !response.submitted);
+  }
+
+  function renderAnswerWidget(question, response) {
+    if (question.type === 'mcq') {
+      renderMcq(question, response);
+      return;
+    }
+    if (question.type === 'multi') {
+      renderMultiSelect(question, response);
+      return;
+    }
+    if (question.type === 'short') {
+      renderShortAnswer(question, response);
+      return;
+    }
+    if (question.type === 'matching') {
+      renderMatching(question, response);
+      return;
+    }
+    if (question.type === 'sequence') {
+      renderSequence(question, response);
+      return;
+    }
+  }
+
+  function renderMcq(question, response) {
+    const stored = response.answerPayload?.selected || null;
+
+    question.choices.forEach((choice, idx) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'option-card';
+      button.dataset.value = choice;
+      button.dataset.index = String(idx + 1);
+      button.innerHTML = `<span class="option-index">${idx + 1}</span><span>${choice}</span>`;
+
+      if (stored === choice) {
+        button.classList.add('selected');
+      }
+
+      if (response.submitted) {
+        button.disabled = true;
+        if (choice === question.answer) {
+          button.classList.add('correct');
+        } else if (stored === choice && choice !== question.answer) {
+          button.classList.add('incorrect');
         }
+      } else {
+        button.addEventListener('click', () => {
+          els.answerArea.querySelectorAll('.option-card').forEach((el) => el.classList.remove('selected'));
+          button.classList.add('selected');
+        });
+      }
 
-        if (state.config.difficulty !== 'mixed') {
-            filtered = filtered.filter(q => q.difficulty === state.config.difficulty);
+      els.answerArea.appendChild(button);
+    });
+  }
+
+  function renderMultiSelect(question, response) {
+    const stored = new Set(response.answerPayload?.selected || []);
+
+    question.choices.forEach((choice, idx) => {
+      const row = document.createElement('label');
+      row.className = 'check-row';
+
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.value = choice;
+      input.checked = stored.has(choice);
+      input.disabled = response.submitted;
+
+      const text = document.createElement('span');
+      text.textContent = `${idx + 1}. ${choice}`;
+
+      row.appendChild(input);
+      row.appendChild(text);
+
+      if (response.submitted) {
+        const isCorrectChoice = question.answers.includes(choice);
+        if (isCorrectChoice) {
+          row.classList.add('correct');
         }
-
-        // Shuffle using Fisher-Yates for better randomness
-        for (let i = filtered.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+        if (stored.has(choice) && !isCorrectChoice) {
+          row.classList.add('incorrect');
         }
+      }
 
-        // Slice to count
-        state.quiz.questions = filtered.slice(0, state.config.count);
-        
-        if (state.quiz.questions.length === 0) {
-            alert("No questions found for this configuration! Try 'Mixed' difficulty.");
-            return;
+      els.answerArea.appendChild(row);
+    });
+  }
+
+  function renderShortAnswer(question, response) {
+    const input = document.createElement('textarea');
+    input.className = 'short-input';
+    input.rows = 3;
+    input.placeholder = 'Type your answer here...';
+    input.value = response.answerPayload?.text || '';
+
+    if (response.submitted) {
+      input.disabled = true;
+      input.classList.add(response.correct ? 'correct' : 'incorrect');
+    }
+
+    els.answerArea.appendChild(input);
+
+    if (response.submitted && !response.correct) {
+      const note = document.createElement('p');
+      note.className = 'answer-note';
+      note.textContent = `Expected idea: ${question.answers[0]}`;
+      els.answerArea.appendChild(note);
+    }
+  }
+
+  function renderMatching(question, response) {
+    const rightChoices = shuffleArray(question.pairs.map((pair) => pair.right));
+    const stored = response.answerPayload?.matches || {};
+
+    question.pairs.forEach((pair) => {
+      const row = document.createElement('div');
+      row.className = 'match-row';
+
+      const left = document.createElement('span');
+      left.className = 'match-left';
+      left.textContent = pair.left;
+
+      const select = document.createElement('select');
+      select.className = 'match-select';
+      select.dataset.left = pair.left;
+
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Select match...';
+      select.appendChild(placeholder);
+
+      rightChoices.forEach((choice) => {
+        const option = document.createElement('option');
+        option.value = choice;
+        option.textContent = choice;
+        select.appendChild(option);
+      });
+
+      if (stored[pair.left]) {
+        select.value = stored[pair.left];
+      }
+
+      if (response.submitted) {
+        select.disabled = true;
+        if (stored[pair.left] === pair.right) {
+          select.classList.add('correct');
+        } else {
+          select.classList.add('incorrect');
         }
+      }
 
-        // Reset Quiz State
-        state.quiz.currentIndex = 0;
-        state.quiz.score = 0;
-        state.quiz.answers = new Array(state.quiz.questions.length).fill(null); // Init answer store
+      row.appendChild(left);
+      row.appendChild(select);
+      els.answerArea.appendChild(row);
+    });
+  }
 
+  function renderSequence(question, response) {
+    const sequence = response.answerPayload?.order || shuffleArray(question.items);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sequence-list';
+
+    sequence.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'sequence-row';
+
+      const label = document.createElement('span');
+      label.textContent = `${index + 1}. ${item}`;
+
+      const controls = document.createElement('div');
+      controls.className = 'sequence-controls';
+
+      const up = document.createElement('button');
+      up.type = 'button';
+      up.textContent = 'Up';
+      up.disabled = response.submitted || index === 0;
+
+      const down = document.createElement('button');
+      down.type = 'button';
+      down.textContent = 'Down';
+      down.disabled = response.submitted || index === sequence.length - 1;
+
+      up.addEventListener('click', () => {
+        const next = [...sequence];
+        [next[index - 1], next[index]] = [next[index], next[index - 1]];
+        currentResponse().answerPayload = { order: next };
         renderQuestion();
-        switchView('quiz');
+      });
+
+      down.addEventListener('click', () => {
+        const next = [...sequence];
+        [next[index + 1], next[index]] = [next[index], next[index + 1]];
+        currentResponse().answerPayload = { order: next };
+        renderQuestion();
+      });
+
+      controls.appendChild(up);
+      controls.appendChild(down);
+      row.appendChild(label);
+      row.appendChild(controls);
+      wrapper.appendChild(row);
+    });
+
+    if (response.submitted) {
+      wrapper.classList.add(response.correct ? 'correct' : 'incorrect');
+      if (!response.correct) {
+        const solution = document.createElement('p');
+        solution.className = 'answer-note';
+        solution.textContent = `Suggested order: ${question.correctOrder.join(' -> ')}`;
+        els.answerArea.appendChild(solution);
+      }
     }
 
-    function quitQuiz() {
-        if(confirm("Are you sure you want to end this flight early? Progress will be lost.")) {
-            switchView('config');
+    els.answerArea.appendChild(wrapper);
+  }
+
+  function checkCurrentQuestion() {
+    const question = currentQuestion();
+    const response = currentResponse();
+    if (response.submitted) {
+      return;
+    }
+
+    const payload = collectAnswerPayload(question);
+    if (!payload) {
+      return;
+    }
+
+    const isCorrect = evaluate(question, payload);
+    const weight = questionWeight(question);
+
+    response.submitted = true;
+    response.correct = isCorrect;
+    response.answerPayload = payload;
+    response.scoreWeight = weight;
+
+    state.quiz.topicStats[question.topic].total += 1;
+    if (isCorrect) {
+      state.quiz.scorePoints += weight;
+      state.quiz.topicStats[question.topic].correct += 1;
+    }
+
+    renderFeedback(isCorrect, question.explanation);
+    renderQuestion();
+  }
+
+  function collectAnswerPayload(question) {
+    if (question.type === 'mcq') {
+      const selected = els.answerArea.querySelector('.option-card.selected');
+      if (!selected) {
+        alert('Select one option.');
+        return null;
+      }
+      return { selected: selected.dataset.value };
+    }
+
+    if (question.type === 'multi') {
+      const selected = Array.from(els.answerArea.querySelectorAll('input[type="checkbox"]:checked')).map((input) => input.value);
+      if (!selected.length) {
+        alert('Select at least one option.');
+        return null;
+      }
+      return { selected };
+    }
+
+    if (question.type === 'short') {
+      const text = els.answerArea.querySelector('textarea').value.trim();
+      if (!text) {
+        alert('Enter a short answer.');
+        return null;
+      }
+      return { text };
+    }
+
+    if (question.type === 'matching') {
+      const matches = {};
+      const selects = Array.from(els.answerArea.querySelectorAll('select'));
+      for (const select of selects) {
+        if (!select.value) {
+          alert('Complete all matches.');
+          return null;
         }
+        matches[select.dataset.left] = select.value;
+      }
+      return { matches };
     }
 
-    function renderQuestion() {
-        const q = state.quiz.questions[state.quiz.currentIndex];
-        const total = state.quiz.questions.length;
-        const savedAnswer = state.quiz.answers[state.quiz.currentIndex];
-        
-        // Update Meta
-        els.quiz.progress.style.width = `${((state.quiz.currentIndex) / total) * 100}%`;
-        els.quiz.tag.textContent = q.category;
-        els.quiz.number.textContent = `Q ${state.quiz.currentIndex + 1}/${total}`;
-        els.quiz.text.textContent = q.question;
+    if (question.type === 'sequence') {
+      const existing = currentResponse().answerPayload?.order;
+      const order = existing || Array.from(els.answerArea.querySelectorAll('.sequence-row span')).map((rowText) => rowText.textContent.replace(/^\d+\.\s/, ''));
+      return { order };
+    }
 
-        // Reset UI
-        els.quiz.optionsArea.innerHTML = '';
-        els.quiz.feedback.area.classList.add('hidden');
-        
-        // Button Logic
-        els.quiz.prevBtn.classList.toggle('hidden', state.quiz.currentIndex === 0);
-        
-        if (savedAnswer && savedAnswer.attempted) {
-             // If already answered, show feedback and next button immediately
-             els.quiz.checkBtn.classList.add('hidden');
-             els.quiz.nextBtn.classList.remove('hidden');
-             showFeedback(savedAnswer.correct, q.explanation);
-        } else {
-             // Fresh question
-             els.quiz.checkBtn.classList.remove('hidden');
-             els.quiz.nextBtn.classList.add('hidden');
+    return null;
+  }
+
+  function evaluate(question, payload) {
+    if (question.type === 'mcq') {
+      return payload.selected === question.answer;
+    }
+
+    if (question.type === 'multi') {
+      const picked = [...payload.selected].sort();
+      const expected = [...question.answers].sort();
+      return picked.length === expected.length && picked.every((value, idx) => value === expected[idx]);
+    }
+
+    if (question.type === 'short') {
+      const normalized = normalize(payload.text);
+      return question.answers.some((answer) => normalized.includes(normalize(answer)) || normalize(answer).includes(normalized));
+    }
+
+    if (question.type === 'matching') {
+      return question.pairs.every((pair) => payload.matches[pair.left] === pair.right);
+    }
+
+    if (question.type === 'sequence') {
+      return question.correctOrder.every((item, idx) => payload.order[idx] === item);
+    }
+
+    return false;
+  }
+
+  function renderFeedback(correct, explanation) {
+    els.feedbackArea.classList.remove('hidden');
+    els.feedbackArea.classList.toggle('correct', correct);
+    els.feedbackArea.classList.toggle('incorrect', !correct);
+    els.feedbackTitle.textContent = correct ? 'Correct' : 'Not quite';
+    els.feedbackBody.textContent = explanation;
+  }
+
+  function nextQuestion() {
+    if (state.quiz.currentIndex < state.quiz.questions.length - 1) {
+      state.quiz.currentIndex += 1;
+      renderQuestion();
+      return;
+    }
+
+    finishQuiz();
+  }
+
+  function prevQuestion() {
+    if (state.quiz.currentIndex === 0) {
+      return;
+    }
+    state.quiz.currentIndex -= 1;
+    renderQuestion();
+  }
+
+  function finishQuiz() {
+    const percentage = Math.round((state.quiz.scorePoints / Math.max(1, state.quiz.possiblePoints)) * 100);
+    const correctCount = state.quiz.responses.filter((r) => r.correct).length;
+
+    if (percentage >= 80) {
+      state.streak += 1;
+      localStorage.setItem('flight-lab-streak', String(state.streak));
+      els.streakDisplay.textContent = String(state.streak);
+    }
+
+    const guidance = percentage >= 85
+      ? 'Strong session. Next step: increase scenario difficulty and reduce prompts.'
+      : percentage >= 65
+        ? 'Good base. Re-fly weak topics and repeat with medium/scenario questions.'
+        : 'Focus on one topic at a time, then rebuild to mixed sessions.';
+
+    els.finalScore.textContent = `${percentage}%`;
+    els.finalSummary.textContent = `${correctCount} / ${state.quiz.questions.length} correct | ${state.quiz.scorePoints} / ${state.quiz.possiblePoints} weighted points`;
+    els.finalGuidance.textContent = guidance;
+
+    renderTopicPerformance();
+    renderMissedReview();
+
+    switchView('results');
+    updateSessionLabel();
+  }
+
+  function renderTopicPerformance() {
+    const stats = state.quiz.topicStats;
+    const topicRows = Object.keys(stats).sort();
+
+    els.topicPerformance.innerHTML = '';
+
+    topicRows.forEach((topic) => {
+      const { correct, total } = stats[topic];
+      const pct = total === 0 ? 0 : Math.round((correct / total) * 100);
+
+      const row = document.createElement('div');
+      row.className = 'topic-row';
+      row.innerHTML = `
+        <div class="topic-row-head">
+          <span>${topic}</span>
+          <strong>${pct}%</strong>
+        </div>
+        <div class="topic-row-bar"><span style="width:${pct}%"></span></div>
+      `;
+      els.topicPerformance.appendChild(row);
+    });
+
+    state.lastWeakTopics = topicRows.filter((topic) => {
+      const { correct, total } = stats[topic];
+      if (total === 0) {
+        return false;
+      }
+      return (correct / total) < 0.7;
+    });
+  }
+
+  function renderMissedReview() {
+    els.missedReview.innerHTML = '';
+
+    const missed = state.quiz.questions
+      .map((question, index) => ({ question, response: state.quiz.responses[index] }))
+      .filter(({ response }) => !response.correct);
+
+    if (!missed.length) {
+      const clean = document.createElement('p');
+      clean.textContent = 'No misses this flight. Increase difficulty or reduce question prompts for the next round.';
+      els.missedReview.appendChild(clean);
+      return;
+    }
+
+    missed.forEach(({ question, response }) => {
+      const card = document.createElement('article');
+      card.className = 'missed-card';
+      card.innerHTML = `
+        <p class="missed-topic">${question.topic} • ${questionTypeLabel(question.type)}</p>
+        <h4>${question.prompt}</h4>
+        <p><strong>Your answer:</strong> ${stringifyAnswer(response.answerPayload)}</p>
+        <p><strong>Coach note:</strong> ${question.explanation}</p>
+      `;
+      els.missedReview.appendChild(card);
+    });
+  }
+
+  function retryWeakTopics() {
+    if (!state.lastWeakTopics.length) {
+      alert('No weak topics detected in the last session. You can still start a new mixed session.');
+      return;
+    }
+
+    state.config.topics = new Set(state.lastWeakTopics);
+    state.config.difficulty = 'mixed';
+
+    syncTopicButtons();
+
+    els.difficultyButtons.forEach((btn) => {
+      btn.classList.toggle('selected', btn.dataset.difficulty === 'mixed');
+    });
+
+    switchView('config');
+    updateSessionLabel();
+  }
+
+  function syncTopicButtons() {
+    const allTopics = uniqueTopics();
+    const allSelected = state.config.topics.size === allTopics.length;
+
+    els.topicSelection.querySelectorAll('.topic-btn').forEach((btn) => {
+      const topic = btn.dataset.topic;
+      if (topic === 'all') {
+        btn.classList.toggle('selected', allSelected);
+      } else {
+        btn.classList.toggle('selected', !allSelected && state.config.topics.has(topic));
+      }
+    });
+  }
+
+  function updateQuizMeta(question) {
+    const total = state.quiz.questions.length;
+    const current = state.quiz.currentIndex + 1;
+    const progress = Math.round((state.quiz.currentIndex / total) * 100);
+
+    els.progress.style.width = `${progress}%`;
+    els.topicTag.textContent = question.topic;
+    els.difficultyTag.textContent = difficultyLabel(question.difficulty);
+    els.qIndex.textContent = `${current}/${total}`;
+  }
+
+  function updateCountCopy() {
+    els.countCopy.textContent = `${state.config.count} questions`;
+  }
+
+  function updateSessionLabel() {
+    if (state.view === 'quiz') {
+      els.sessionModeDisplay.textContent = 'In flight';
+    } else if (state.view === 'results') {
+      els.sessionModeDisplay.textContent = 'Debrief';
+    } else {
+      els.sessionModeDisplay.textContent = 'Briefing';
+    }
+  }
+
+  function loadStreak() {
+    const stored = Number(localStorage.getItem('flight-lab-streak') || '0');
+    state.streak = Number.isFinite(stored) ? stored : 0;
+    els.streakDisplay.textContent = String(state.streak);
+  }
+
+  function handleKeyboardShortcuts(event) {
+    if (state.view !== 'quiz') {
+      return;
+    }
+
+    const response = currentResponse();
+    if (event.key === 'Enter') {
+      if (!response.submitted) {
+        checkCurrentQuestion();
+      } else {
+        nextQuestion();
+      }
+      return;
+    }
+
+    if (currentQuestion().type !== 'mcq' || response.submitted) {
+      return;
+    }
+
+    const number = Number(event.key);
+    if (!Number.isInteger(number) || number < 1 || number > 9) {
+      return;
+    }
+
+    const option = els.answerArea.querySelector(`.option-card[data-index="${number}"]`);
+    if (option) {
+      option.click();
+    }
+  }
+
+  function switchView(view) {
+    Object.entries(els.views).forEach(([name, element]) => {
+      element.classList.toggle('hidden-view', name !== view);
+      element.classList.toggle('active-view', name === view);
+    });
+    state.view = view;
+  }
+
+  function currentQuestion() {
+    return state.quiz.questions[state.quiz.currentIndex];
+  }
+
+  function currentResponse() {
+    return state.quiz.responses[state.quiz.currentIndex];
+  }
+
+  function buildTopicStats(questions) {
+    return questions.reduce((stats, question) => {
+      if (!stats[question.topic]) {
+        stats[question.topic] = { correct: 0, total: 0 };
+      }
+      return stats;
+    }, {});
+  }
+
+  function uniqueTopics() {
+    return [...new Set(QUESTION_BANK.map((q) => q.topic))].sort();
+  }
+
+  function questionWeight(question) {
+    return DIFFICULTY_POINTS[question.difficulty] || 1;
+  }
+
+  function difficultyLabel(difficulty) {
+    if (difficulty === 'easy') return 'Foundation';
+    if (difficulty === 'medium') return 'Application';
+    return 'Scenario';
+  }
+
+  function questionTypeLabel(type) {
+    if (type === 'mcq') return 'Single Choice';
+    if (type === 'multi') return 'Multi Select';
+    if (type === 'short') return 'Short Answer';
+    if (type === 'matching') return 'Matching';
+    if (type === 'sequence') return 'Order / Flow';
+    return type;
+  }
+
+  function stringifyAnswer(payload) {
+    if (!payload) return 'No answer recorded';
+    if (payload.selected) return Array.isArray(payload.selected) ? payload.selected.join(', ') : payload.selected;
+    if (payload.text) return payload.text;
+    if (payload.matches) return Object.entries(payload.matches).map(([k, v]) => `${k} -> ${v}`).join('; ');
+    if (payload.order) return payload.order.join(' -> ');
+    return JSON.stringify(payload);
+  }
+
+  function normalize(value) {
+    return String(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function shuffleArray(array) {
+    const copy = [...array];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function exposeTestingHooks() {
+    window.render_game_to_text = () => {
+      const current = state.view === 'quiz' ? currentQuestion() : null;
+      const payload = {
+        mode: state.view,
+        coordinate_system: 'No 2D game coordinates; DOM-based quiz UI.',
+        config: {
+          topics: [...state.config.topics],
+          difficulty: state.config.difficulty,
+          count: state.config.count
+        },
+        quiz: {
+          index: state.quiz.currentIndex,
+          total: state.quiz.questions.length,
+          scorePoints: state.quiz.scorePoints,
+          possiblePoints: state.quiz.possiblePoints,
+          currentQuestion: current ? {
+            id: current.id,
+            topic: current.topic,
+            type: current.type,
+            difficulty: current.difficulty,
+            prompt: current.prompt
+          } : null
         }
+      };
+      return JSON.stringify(payload);
+    };
 
-        // Render based on Type
-        if (q.type === 'mcq') {
-            renderMCQ(q, savedAnswer);
-        } else if (q.type === 'matching') {
-            renderMatching(q, savedAnswer);
-        } else if (q.type === 'fill_blank' || q.type === 'input') {
-            renderInput(q, savedAnswer);
-        }
-    }
-
-    function renderMCQ(q, savedAnswer) {
-        // Reuse options order if already shuffled? No, simpler to just re-render. 
-        // Note: shuffling might be confusing if user goes back and options move. 
-        // For V1, we accept re-shuffle on re-visit or we can store order. 
-        // Let's just re-shuffle for now to keep it simple, unless it's already answered.
-        
-        let options = [...q.options];
-        // Only shuffle if not already stored? Too complex. Just shuffle.
-        options.sort(() => Math.random() - 0.5);
-
-        options.forEach(opt => {
-            const div = document.createElement('div');
-            div.className = 'option-card';
-            div.innerHTML = `<span class="opt-text">${opt}</span>`;
-            
-            // Restore state if answered
-            if(savedAnswer && savedAnswer.attempted) {
-                if(opt === savedAnswer.userResponse) {
-                    div.classList.add(savedAnswer.correct ? 'correct' : 'incorrect');
-                    div.classList.add('selected'); // Highlight what they picked
-                }
-                if(opt === q.correctAnswer) div.classList.add('correct');
-                div.style.pointerEvents = 'none'; // Disable changing answer
-            } else {
-                div.onclick = () => selectOption(div);
-            }
-            
-            els.quiz.optionsArea.appendChild(div);
-        });
-    }
-
-    function renderInput(q, savedAnswer) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'text-input-wrapper';
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = 'Type your answer...';
-        input.id = 'current-text-input';
-
-        if(savedAnswer && savedAnswer.attempted) {
-            input.value = savedAnswer.userResponse;
-            input.classList.add(savedAnswer.correct ? 'correct' : 'incorrect');
-            input.disabled = true;
-            
-            if(!savedAnswer.correct) {
-                // Show Correct Answer below
-                const ansDisplay = document.createElement('div');
-                ansDisplay.style.marginTop = '10px';
-                ansDisplay.style.color = 'var(--accent-green)';
-                ansDisplay.innerHTML = `<strong>Correct Answer:</strong> ${q.correctAnswer[0]}`; // Show primary
-                wrapper.appendChild(ansDisplay);
-            }
-        }
-
-        wrapper.appendChild(input);
-        els.quiz.optionsArea.appendChild(wrapper);
-    }
-
-    function renderMatching(q, savedAnswer) {
-        // Matching is complex to "restore" state without big refactor. 
-        // For V1 navigation update: If user goes back to matching, we might reset it or show it as done.
-        // Let's show as done if answered, otherwise reset.
-        
-        const container = document.createElement('div');
-        container.className = 'matching-container';
-        
-        const leftCol = document.createElement('div');
-        leftCol.className = 'match-col';
-        const rightCol = document.createElement('div');
-        rightCol.className = 'match-col';
-
-        let leftItems = q.pairs.map(p => ({ id: p.item, text: p.item }));
-        let rightItems = q.pairs.map(p => ({ id: p.item, text: p.match }));
-
-        // Shuffle
-        leftItems.sort(() => Math.random() - 0.5);
-        rightItems.sort(() => Math.random() - 0.5);
-
-        // If answered, just show them all "matched" or correct? 
-        // Simpler: Just disable interaction if answered.
-        const isFrozen = savedAnswer && savedAnswer.attempted;
-
-        leftItems.forEach(item => {
-            const el = document.createElement('div');
-            el.className = 'match-item left';
-            el.textContent = item.text;
-            el.dataset.id = item.id;
-            if (isFrozen) el.classList.add('matched');
-            else el.onclick = () => handleMatchClick(el, 'left');
-            leftCol.appendChild(el);
-        });
-
-        rightItems.forEach(item => {
-            const el = document.createElement('div');
-            el.className = 'match-item right';
-            el.textContent = item.text;
-            el.dataset.matchId = item.id;
-            if (isFrozen) el.classList.add('matched');
-            else el.onclick = () => handleMatchClick(el, 'right');
-            rightCol.appendChild(el);
-        });
-
-        container.appendChild(leftCol);
-        container.appendChild(rightCol);
-        els.quiz.optionsArea.appendChild(container);
-
-        if (!isFrozen) {
-            state.quiz.currentMatch = { left: null, right: null, matches: 0, total: q.pairs.length };
-        }
-    }
-
-    // --- INTERACTION LOGIC ---
-
-    function selectOption(el) {
-        // Only for MCQ
-        if (state.quiz.questions[state.quiz.currentIndex].type === 'matching') return;
-        document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
-    }
-
-    function handleMatchClick(el, side) {
-        if (el.classList.contains('matched')) return;
-
-        document.querySelectorAll(`.match-item.${side}`).forEach(i => i.classList.remove('selected'));
-        el.classList.add('selected');
-        
-        state.quiz.currentMatch[side] = el;
-
-        if (state.quiz.currentMatch.left && state.quiz.currentMatch.right) {
-            checkMatchAttempt();
-        }
-    }
-
-    function checkMatchAttempt() {
-        const left = state.quiz.currentMatch.left;
-        const right = state.quiz.currentMatch.right;
-
-        if (left.dataset.id === right.dataset.matchId) {
-            left.classList.remove('selected');
-            right.classList.remove('selected');
-            left.classList.add('matched');
-            right.classList.add('matched');
-            state.quiz.currentMatch.matches++;
-        } else {
-            setTimeout(() => {
-                left.classList.remove('selected');
-                right.classList.remove('selected');
-            }, 300);
-        }
-
-        state.quiz.currentMatch.left = null;
-        state.quiz.currentMatch.right = null;
-    }
-
-    function checkAnswer() {
-        const q = state.quiz.questions[state.quiz.currentIndex];
-        let isCorrect = false;
-        let userResponse = null;
-
-        if (q.type === 'mcq') {
-            const selected = document.querySelector('.option-card.selected');
-            if (!selected) return; 
-
-            userResponse = selected.querySelector('.opt-text').textContent;
-            if (userResponse === q.correctAnswer) {
-                isCorrect = true;
-                selected.classList.add('correct');
-            } else {
-                selected.classList.add('incorrect');
-                // Highlight correct
-                document.querySelectorAll('.option-card').forEach(card => {
-                    if (card.querySelector('.opt-text').textContent === q.correctAnswer) {
-                        card.classList.add('correct');
-                    }
-                });
-            }
-        } 
-        else if (q.type === 'input' || q.type === 'fill_blank') {
-            const input = document.getElementById('current-text-input');
-            userResponse = input.value.trim();
-            if(!userResponse) return;
-
-            // Check against array of correct answers (case insensitive)
-            const accepted = q.correctAnswer.map(a => a.toLowerCase());
-            if (accepted.includes(userResponse.toLowerCase())) {
-                isCorrect = true;
-                input.classList.add('correct');
-            } else {
-                input.classList.add('incorrect');
-                // Show correct answer logic handled in renderInput on redraw, but we can do it here too for instant feedback
-                const wrapper = document.querySelector('.text-input-wrapper');
-                const ansDisplay = document.createElement('div');
-                ansDisplay.style.marginTop = '10px';
-                ansDisplay.style.color = 'var(--accent-green)';
-                ansDisplay.innerHTML = `<strong>Correct Answer:</strong> ${q.correctAnswer[0]}`; 
-                wrapper.appendChild(ansDisplay);
-            }
-        }
-        else if (q.type === 'matching') {
-            // Assume completion = correct for now
-            if (state.quiz.currentMatch.matches === state.quiz.currentMatch.total) {
-                isCorrect = true;
-                userResponse = "completed";
-            } else {
-                alert("Please match all items.");
-                return;
-            }
-        }
-
-        // Save State
-        state.quiz.answers[state.quiz.currentIndex] = {
-            attempted: true,
-            correct: isCorrect,
-            userResponse: userResponse
-        };
-
-        if (isCorrect) state.quiz.score++;
-        
-        showFeedback(isCorrect, q.explanation);
-
-        // Toggle Buttons
-        els.quiz.checkBtn.classList.add('hidden');
-        els.quiz.nextBtn.classList.remove('hidden');
-    }
-
-    function showFeedback(isCorrect, text) {
-        els.quiz.feedback.area.className = `feedback-box ${isCorrect ? 'correct' : 'incorrect'}`;
-        els.quiz.feedback.title.textContent = isCorrect ? 'Correct!' : 'Incorrect';
-        els.quiz.feedback.text.textContent = text;
-        els.quiz.feedback.area.classList.remove('hidden');
-    }
-
-    function nextQuestion() {
-        state.quiz.currentIndex++;
-        if (state.quiz.currentIndex >= state.quiz.questions.length) {
-            finishQuiz();
-        } else {
-            renderQuestion();
-        }
-    }
-
-    function prevQuestion() {
-        if (state.quiz.currentIndex > 0) {
-            state.quiz.currentIndex--;
-            renderQuestion();
-        }
-    }
-
-    function finishQuiz() {
-        if (state.quiz.score === state.quiz.questions.length) {
-            state.streak++;
-            localStorage.setItem('ppl-streak', state.streak);
-            els.streak.textContent = state.streak;
-        }
-
-        els.results.score.textContent = `${Math.round((state.quiz.score / state.quiz.questions.length) * 100)}%`;
-        els.results.subScore.textContent = `${state.quiz.score} / ${state.quiz.questions.length} Correct`;
-
-        switchView('results');
-    }
-
-    function switchView(viewName) {
-        Object.values(els.views).forEach(el => el.classList.remove('active-view'));
-        Object.values(els.views).forEach(el => el.classList.add('hidden-view'));
-        
-        els.views[viewName].classList.remove('hidden-view');
-        els.views[viewName].classList.add('active-view');
-        state.view = viewName;
-    }
+    window.advanceTime = () => {
+      return true;
+    };
+  }
 });

@@ -1,115 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PPL Study Buddy - C172s Edition</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alexa Flight Lab | Canadian PPL C172S</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Sora:wght@600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="sky-layer" aria-hidden="true"></div>
+  <div class="grain-layer" aria-hidden="true"></div>
 
-    <div class="app-container">
-        <!-- Header -->
-        <header class="main-header">
-            <div class="logo-area">
-                <div class="icon-plane">✈️</div>
-                <h1>PPL Study Buddy <span class="badge">C172s</span></h1>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Canadian PPL Training</p>
+        <h1>Alexa Flight Lab <span class="aircraft-pill">C172S Skyhawk</span></h1>
+      </div>
+      <div class="topbar-stats">
+        <div class="stat-chip">
+          <span>Streak</span>
+          <strong id="streak-display">0</strong>
+        </div>
+        <div class="stat-chip">
+          <span>Session</span>
+          <strong id="session-mode-display">Briefing</strong>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="view-config" class="view active-view">
+        <div class="panel panel-large">
+          <h2>Build a Flight Session</h2>
+          <p class="panel-copy">This deck focuses on practical PPL skills for early C172S flying in Canada. Data can vary by aircraft serial, weight, and POH revision. Verify with your aircraft documents and instructor.</p>
+
+          <div class="config-grid">
+            <article class="config-card">
+              <h3>Topics</h3>
+              <p>Pick one or mix all.</p>
+              <div id="topic-selection" class="topic-grid"></div>
+            </article>
+
+            <article class="config-card">
+              <h3>Difficulty</h3>
+              <p>Adjust cognitive load.</p>
+              <div id="difficulty-selection" class="pill-row">
+                <button class="pill-btn selected" data-difficulty="mixed">Mixed</button>
+                <button class="pill-btn" data-difficulty="easy">Foundation</button>
+                <button class="pill-btn" data-difficulty="medium">Application</button>
+                <button class="pill-btn" data-difficulty="hard">Scenario</button>
+              </div>
+            </article>
+
+            <article class="config-card">
+              <h3>Question Count</h3>
+              <p id="question-count-copy">12 questions</p>
+              <input id="question-count" type="range" min="8" max="36" step="4" value="12" aria-label="Question count">
+            </article>
+          </div>
+
+          <button id="start-btn" class="primary-btn">Start Study Flight</button>
+        </div>
+      </section>
+
+      <section id="view-quiz" class="view hidden-view">
+        <div class="panel">
+          <div class="quiz-top">
+            <div class="progress-track" role="progressbar" aria-label="Quiz progress">
+              <div id="quiz-progress" class="progress-fill"></div>
             </div>
-            <div class="user-stats">
-                <span>Streak: <b id="streak-display">0</b> 🔥</span>
+            <div class="quiz-meta">
+              <span id="q-topic-tag" class="topic-tag">Topic</span>
+              <span id="q-difficulty-tag" class="difficulty-tag">Difficulty</span>
+              <span id="q-index">1/12</span>
             </div>
-        </header>
+          </div>
 
-        <!-- Main Content Area -->
-        <main id="main-content">
-            
-            <!-- VIEW: CONFIGURATION (Start Screen) -->
-            <section id="view-config" class="active-view">
-                <h2>Flight Briefing</h2>
-                <p class="subtitle">Configure your training session.</p>
+          <article class="question-shell">
+            <p id="q-type-label" class="q-type">Type</p>
+            <h2 id="question-text">Question text</h2>
+            <p id="question-context" class="question-context"></p>
+            <div id="answer-area" class="answer-area"></div>
+          </article>
 
-                <div class="config-group">
-                    <label>Select Topic(s)</label>
-                    <div class="topic-grid" id="topic-selection">
-                        <!-- Topics injected by JS -->
-                        <button class="topic-btn selected" data-topic="all">Mix All Topics</button>
-                    </div>
-                </div>
+          <div id="feedback-area" class="feedback-area hidden">
+            <h3 id="feedback-title">Feedback</h3>
+            <p id="feedback-body"></p>
+          </div>
 
-                <div class="config-group">
-                    <label>Difficulty</label>
-                    <div class="pill-selector" id="difficulty-selection">
-                        <button class="pill-btn selected" data-diff="mixed">Mixed</button>
-                        <button class="pill-btn" data-diff="easy">Basic (Recall)</button>
-                        <button class="pill-btn" data-diff="medium">Standard (Application)</button>
-                        <button class="pill-btn" data-diff="hard">Advanced (Scenario)</button>
-                    </div>
-                </div>
+          <div class="button-row">
+            <button id="prev-btn" class="ghost-btn">Previous</button>
+            <button id="check-btn" class="secondary-btn">Check Answer</button>
+            <button id="next-btn" class="primary-btn hidden">Next Question</button>
+          </div>
 
-                <div class="config-group">
-                    <label>Flight Duration (Questions)</label>
-                    <input type="range" id="question-count" min="5" max="50" step="5" value="10">
-                    <div class="range-value"><span id="q-count-val">10</span> Questions</div>
-                </div>
+          <div class="button-row compact">
+            <button id="quit-btn" class="text-btn">Exit to briefing</button>
+          </div>
+        </div>
+      </section>
 
-                <button id="start-btn" class="action-btn primary large">Takeoff 🛫</button>
-            </section>
+      <section id="view-results" class="view hidden-view">
+        <div class="panel panel-large">
+          <h2>Debrief</h2>
+          <div class="result-hero">
+            <div class="score-orb"><span id="final-score">0%</span></div>
+            <div>
+              <p id="final-summary" class="final-summary">0 / 0 correct</p>
+              <p id="final-guidance" class="panel-copy"></p>
+            </div>
+          </div>
 
-            <!-- VIEW: QUIZ INTERFACE -->
-            <section id="view-quiz" class="hidden-view">
-                <div class="quiz-header">
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" id="quiz-progress" style="width: 0%"></div>
-                    </div>
-                    <div class="q-meta">
-                        <span id="q-category-tag" class="tag">Attitudes</span>
-                        <span id="q-number">Q 1/10</span>
-                    </div>
-                </div>
+          <div>
+            <h3>Topic Performance</h3>
+            <div id="topic-performance" class="topic-performance"></div>
+          </div>
 
-                <div class="question-container" id="question-area">
-                    <!-- Question Content Injected Here -->
-                    <h3 id="question-text">Loading...</h3>
-                    <div id="options-area" class="options-grid"></div>
-                </div>
+          <div>
+            <h3>Missed Review</h3>
+            <div id="missed-review" class="missed-review"></div>
+          </div>
 
-                <div class="quiz-controls">
-                    <button id="prev-btn" class="action-btn secondary hidden">&larr; Previous</button>
-                    <button id="check-btn" class="action-btn secondary">Check Answer</button>
-                    <button id="next-btn" class="action-btn primary hidden">Next Question &rarr;</button>
-                </div>
-                
-                <div class="quiz-footer-actions">
-                    <button id="quit-btn" class="text-link-btn">Quit / Return to Hangar</button>
-                </div>
-                
-                <div id="feedback-area" class="feedback-box hidden">
-                    <h4 id="feedback-title">Correct!</h4>
-                    <p id="feedback-text">Explanation goes here.</p>
-                </div>
-            </section>
+          <div class="button-row">
+            <button id="restart-btn" class="secondary-btn">Plan New Session</button>
+            <button id="retry-weak-btn" class="primary-btn">Retry Weak Topics</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
 
-            <!-- VIEW: RESULTS -->
-            <section id="view-results" class="hidden-view">
-                <h2>Debriefing</h2>
-                <div class="score-card">
-                    <div class="score-circle">
-                        <span id="final-score">80%</span>
-                    </div>
-                    <p id="sub-score">8 / 10 Correct</p>
-                </div>
-                <div class="action-row">
-                    <button id="restart-btn" class="action-btn secondary">New Flight</button>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <script src="questions.js"></script>
-    <script src="script.js"></script>
+  <script src="questions.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

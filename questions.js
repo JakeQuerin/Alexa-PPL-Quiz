@@ -1,509 +1,408 @@
-const questionBank = [
-  // ==========================================
-  // TOPIC: SPEEDS (MEMORY ITEMS) - C172S
-  // ==========================================
+const QUESTION_BANK = [
   {
-    id: "v_vr",
-    category: "C172s Specs",
-    type: "input",
+    id: "att_pitch_axis",
+    topic: "Attitudes & Movements",
     difficulty: "easy",
-    question: "What is the rotation speed (Vr) in KIAS?",
-    correctAnswer: ["55", "55 kias"],
-    explanation: "Rotate at 55 KIAS."
-  },
-  {
-    id: "v_vx",
-    category: "C172s Specs",
-    type: "input",
-    difficulty: "medium",
-    question: "What is the Best Angle of Climb speed (Vx) in KIAS?",
-    correctAnswer: ["62", "62 kias"],
-    explanation: "Vx (62 KIAS) gives the most altitude gain over a given distance."
-  },
-  {
-    id: "v_vy",
-    category: "C172s Specs",
-    type: "input",
-    difficulty: "medium",
-    question: "What is the Best Rate of Climb speed (Vy) in KIAS?",
-    correctAnswer: ["74", "74 kias"],
-    explanation: "Vy (74 KIAS) gives the most altitude gain over a given time."
-  },
-  {
-    id: "v_vbg",
-    category: "C172s Specs",
-    type: "input",
-    difficulty: "medium",
-    question: "What is the Best Glide speed (Vbg) in KIAS?",
-    correctAnswer: ["68", "68 kias"],
-    explanation: "68 KIAS provides the maximum gliding distance."
-  },
-  {
-    id: "v_vfe_10",
-    category: "C172s Specs",
-    type: "input",
-    difficulty: "hard",
-    question: "What is the maximum speed for Flaps 10 (Vfe 10 deg)?",
-    correctAnswer: ["110", "110 kias"],
-    explanation: "Flaps 10 can be deployed below 110 KIAS."
-  },
-  {
-    id: "v_vfe_full",
-    category: "C172s Specs",
-    type: "input",
-    difficulty: "hard",
-    question: "What is the maximum speed for Flaps 20-30 (Vfe)?",
-    correctAnswer: ["85", "85 kias"],
-    explanation: "Flaps greater than 10 degrees are limited to 85 KIAS."
-  },
-  {
-    id: "v_va",
-    category: "C172s Specs",
-    type: "input",
-    difficulty: "hard",
-    question: "What is the Maneuvering Speed (Va) at 2550 lbs (Max Gross)?",
-    correctAnswer: ["105", "105 kias"],
-    explanation: "Va is 105 KIAS at max gross weight, decreasing as weight decreases."
-  },
-   {
-    id: "v_vno",
-    category: "C172s Specs",
-    type: "input",
-    difficulty: "hard",
-    question: "What is the top of the green arc (Vno)?",
-    correctAnswer: ["129", "129 kias"],
-    explanation: "Max structural cruising speed is 129 KIAS."
-  },
-  {
-    id: "v_vne",
-    category: "C172s Specs",
-    type: "input",
-    difficulty: "hard",
-    question: "What is the Never Exceed speed (Vne)?",
-    correctAnswer: ["163", "163 kias"],
-    explanation: "Red line is 163 KIAS."
-  },
-
-  // ==========================================
-  // TOPIC: ATTITUDES & MOVEMENTS
-  // ==========================================
-  {
-    id: "am_yaw",
-    category: "Attitudes & Movements",
     type: "mcq",
+    prompt: "Pitch is rotation around which axis?",
+    choices: ["Lateral axis", "Longitudinal axis", "Vertical axis", "Propeller axis"],
+    answer: "Lateral axis",
+    explanation: "Pitch is nose up/down about the lateral axis (wingtip-to-wingtip)."
+  },
+  {
+    id: "att_roll_axis",
+    topic: "Attitudes & Movements",
     difficulty: "easy",
-    question: "Yaw is movement about the ______ axis.",
-    options: ["Vertical", "Lateral", "Longitudinal", "Horizontal"],
-    correctAnswer: "Vertical",
-    explanation: "Yaw rotates the nose left/right around the vertical axis."
+    type: "mcq",
+    prompt: "Roll is controlled primarily by:",
+    choices: ["Ailerons", "Rudder", "Elevator", "Flaps"],
+    answer: "Ailerons",
+    explanation: "Ailerons increase lift on one wing and decrease it on the other to create roll."
   },
   {
-    id: "am_roll",
-    category: "Attitudes & Movements",
-    type: "mcq",
-    difficulty: "easy",
-    question: "Roll is movement about the ______ axis.",
-    options: ["Longitudinal", "Lateral", "Vertical", "Normal"],
-    correctAnswer: "Longitudinal",
-    explanation: "Roll rotates the wings around the longitudinal axis (nose to tail)."
-  },
-  {
-    id: "am_pitch",
-    category: "Attitudes & Movements",
-    type: "mcq",
-    difficulty: "easy",
-    question: "Pitch is movement about the ______ axis.",
-    options: ["Lateral", "Longitudinal", "Vertical", "Normal"],
-    correctAnswer: "Lateral",
-    explanation: "Pitch moves the nose up/down around the lateral axis (wingtip to wingtip)."
-  },
-  {
-    id: "am_adverse",
-    category: "Attitudes & Movements",
-    type: "mcq",
+    id: "att_adverse_yaw_fix",
+    topic: "Attitudes & Movements",
     difficulty: "medium",
-    question: "When rolling into a left turn, the aircraft initially yaws to the right. This is called:",
-    options: ["Adverse Yaw", "Torque", "P-Factor", "Slipstream"],
-    correctAnswer: "Adverse Yaw",
-    explanation: "The up-going aileron (left) creates less drag than the down-going aileron (right), pulling the nose right."
+    type: "short",
+    prompt: "During aileron roll-in to a left turn, the nose yaws right. Name the effect and the control fix.",
+    context: "Use a short phrase.",
+    answers: ["adverse yaw and coordinated left rudder", "adverse yaw + left rudder", "adverse yaw with left rudder"],
+    explanation: "Adverse yaw is expected. Add coordinated rudder in the direction of turn."
   },
   {
-    id: "am_controls",
-    category: "Attitudes & Movements",
+    id: "att_left_turning_tendencies",
+    topic: "Attitudes & Movements",
+    difficulty: "hard",
+    type: "multi",
+    prompt: "At high power/high AOA in a C172S, which effects can contribute to left yaw tendency?",
+    choices: ["P-factor", "Spiraling slipstream", "Torque reaction", "Ground effect"],
+    answers: ["P-factor", "Spiraling slipstream", "Torque reaction"],
+    explanation: "Left-turning tendencies are a combination of several propeller effects."
+  },
+  {
+    id: "att_control_to_movement",
+    topic: "Attitudes & Movements",
+    difficulty: "easy",
     type: "matching",
-    difficulty: "easy",
-    question: "Match the control surface to the movement.",
+    prompt: "Match control input to primary movement.",
     pairs: [
-        { item: "Elevator", match: "Pitch" },
-        { item: "Ailerons", match: "Roll" },
-        { item: "Rudder", match: "Yaw" },
-        { item: "Trim Tab", match: "Relieve Pressure" }
-    ]
+      { left: "Elevator", right: "Pitch" },
+      { left: "Aileron", right: "Roll" },
+      { left: "Rudder", right: "Yaw" },
+      { left: "Trim wheel", right: "Relieves control pressure" }
+    ],
+    explanation: "This mapping is core to early handling and trim discipline."
   },
 
-  // ==========================================
-  // TOPIC: INSTRUMENTS (PITOT-STATIC & GYRO)
-  // ==========================================
   {
-    id: "inst_vacuum",
-    category: "Instruments",
-    type: "mcq",
+    id: "man_straight_level_scan",
+    topic: "Flight Maneuvers",
     difficulty: "medium",
-    question: "Which two instruments rely on the Vacuum System in a C172s?",
-    options: ["Attitude Indicator & Heading Indicator", "Turn Coordinator & Attitude Indicator", "Heading Indicator & VSI", "Altimeter & ASI"],
-    correctAnswer: "Attitude Indicator & Heading Indicator",
-    explanation: "The AI and HI are vacuum gyros. The Turn Coordinator is usually electric."
+    type: "sequence",
+    prompt: "Put this straight-and-level correction flow in the best order.",
+    items: [
+      "Apply smooth control pressure",
+      "Cross-check attitude and performance instruments",
+      "Trim off pressure",
+      "Re-scan and confirm stable altitude/heading/airspeed"
+    ],
+    correctOrder: [
+      "Cross-check attitude and performance instruments",
+      "Apply smooth control pressure",
+      "Trim off pressure",
+      "Re-scan and confirm stable altitude/heading/airspeed"
+    ],
+    explanation: "Instrument confirmation before and after correction avoids chasing needles."
   },
   {
-    id: "inst_blocked_pitot",
-    category: "Instruments",
-    type: "mcq",
-    difficulty: "hard",
-    question: "Blocked Pitot Tube but Open Drain Hole. What does the ASI read?",
-    options: ["Zero", "Freezes", "Acts like Altimeter", "Fluctuates"],
-    correctAnswer: "Zero",
-    explanation: "Ram air is blocked, but pressure drains out to static pressure (via drain), so differential is zero."
-  },
-  {
-    id: "inst_blocked_static",
-    category: "Instruments",
-    type: "mcq",
-    difficulty: "hard",
-    question: "Blocked Static Port. What happens to the Altimeter?",
-    options: ["Freezes at the altitude of blockage", "Drops-to-Zero", "Acts like ASI", "Reads Lower"],
-    correctAnswer: "Freezes at the altitude of blockage",
-    explanation: "Trapped static pressure keeps the instrument reading constant regardless of actual altitude change."
-  },
-  {
-    id: "inst_alt_temp",
-    category: "Instruments",
-    type: "fill_blank",
-    difficulty: "hard",
-    question: "From High to Low, look out below. If you fly from warm air to cold air without adjusting the altimeter, you are ______ than indicated.",
-    correctAnswer: ["lower"],
-    explanation: "Cold air is denser. The pressure levels are compressed downwards, so you are lower than the altimeter indicates."
-  },
-
-  // ==========================================
-  // TOPIC: TURNS (UNOS/ANDS)
-  // ==========================================
-  {
-    id: "turn_rate",
-    category: "Turns",
-    type: "mcq",
+    id: "man_climb_to_level",
+    topic: "Flight Maneuvers",
     difficulty: "medium",
-    question: "A standard rate turn is ____ degrees per second.",
-    options: ["3", "2", "6", "4"],
-    correctAnswer: "3",
-    explanation: "3 degrees per second completes a 360 turn in 2 minutes."
+    type: "mcq",
+    prompt: "In a normal climb transitioning to cruise, what is the best control sequence?",
+    choices: [
+      "Pitch to level attitude, set cruise power, then trim",
+      "Trim first, then reduce power",
+      "Leave climb power and lower nose aggressively",
+      "Reduce power only and wait"
+    ],
+    answer: "Pitch to level attitude, set cruise power, then trim",
+    explanation: "Attitude, power, trim keeps transition smooth and prevents large altitude deviations."
   },
   {
-    id: "turn_load_60",
-    category: "Turns",
-    type: "input",
-    difficulty: "hard",
-    question: "In a stable 60-degree bank turn, the load factor is ______ Gs.",
-    correctAnswer: ["2", "2.0"],
-    explanation: "Load factor doubles at 60 degrees bank (1 / cos 60)."
-  },
-  {
-    id: "err_unos_n",
-    category: "Compass Errors",
-    type: "fill_blank",
+    id: "man_descend_for_speed",
+    topic: "Flight Maneuvers",
     difficulty: "medium",
-    question: "UNOS: When turning from North, the compass initially indicates a turn in the ______ direction.",
-    correctAnswer: ["opposite", "wrong"],
-    explanation: "Undershoot North / Opposite indication."
+    type: "mcq",
+    prompt: "To increase descent rate while keeping the same airspeed, the primary change is:",
+    choices: ["Reduce power and adjust pitch to hold speed", "Push nose only", "Add flaps only", "Add rudder"],
+    answer: "Reduce power and adjust pitch to hold speed",
+    explanation: "For a target descent speed, pitch controls speed and power controls rate."
   },
   {
-    id: "err_ands_e",
-    category: "Compass Errors",
-    type: "mcq",
+    id: "man_turn_coordination",
+    topic: "Flight Maneuvers",
     difficulty: "medium",
-    question: "ANDS: You are heading East and decelerate. The compass dips to the:",
-    options: ["South", "North", "West", "East"],
-    correctAnswer: "South",
-    explanation: "Decelerate South (ANDS)."
-  },
-
-  // ==========================================
-  // TOPIC: CLIMBS & DESCENTS
-  // ==========================================
-  {
-    id: "climb_service_ceiling",
-    category: "Climbs",
-    type: "mcq",
-    difficulty: "hard",
-    question: "The Service Ceiling is the altitude where the aircraft can maintain a climb rate of:",
-    options: ["100 fpm", "50 fpm", "0 fpm", "500 fpm"],
-    correctAnswer: "100 fpm",
-    explanation: "Service Ceiling = 100 fpm. Absolute Ceiling = 0 fpm."
+    type: "short",
+    prompt: "Ball is displaced to the right in a level left turn. What rudder correction is needed?",
+    answers: ["right rudder", "apply right rudder", "more right rudder"],
+    explanation: "Use the slip/skid rule: step on the ball. Ball right calls for right rudder to re-center."
   },
   {
-    id: "climb_factor",
-    category: "Climbs",
-    type: "mcq",
-    difficulty: "medium",
-    question: "Is Vx (Best Angle) affected by wind?",
-    options: ["Yes, groundspeed changes climb angle relative to ground", "No, it is an airspeed", "Only headwinds affect it", "Only tailwinds affect it"],
-    correctAnswer: "Yes, groundspeed changes climb angle relative to ground",
-    explanation: "While the IAS for Vx doesn't change much, the *resultant* angle relative to the ground (obstacle clearance) is highly dependent on groundspeed/wind."
-  },
-  {
-    id: "desc_power_off",
-    category: "Descents",
-    type: "mcq",
+    id: "man_scan_priority",
+    topic: "Flight Maneuvers",
     difficulty: "easy",
-    question: "In a power-off descent, if you pitch down to increase airspeed, your rate of descent will:",
-    options: ["Increase", "Decrease", "Stay same", "Depend on wind"],
-    correctAnswer: "Increase",
-    explanation: "Diving increases airspeed but drastically increases descent rate (sink)."
+    type: "multi",
+    prompt: "During basic maneuver practice, which instrument/performance cues should be monitored continuously?",
+    choices: ["Attitude", "Airspeed", "Altitude trend", "Oil pressure only"],
+    answers: ["Attitude", "Airspeed", "Altitude trend"],
+    explanation: "The outside horizon and attitude are primary, supported by airspeed and altitude trend."
   },
 
-  // ==========================================
-  // TOPIC: SLOW FLIGHT & STALLS
-  // ==========================================
   {
-    id: "stall_spin",
-    category: "Stalls",
-    type: "mcq",
-    difficulty: "hard",
-    question: "A spin is an aggravated stall where one wing is ______ more than the other.",
-    options: ["Stalled", "Lifted", "Powered", "Angled"],
-    correctAnswer: "Stalled",
-    explanation: "Both wings are stalled in a spin, but one is MORE stalled than the other, causing autorotation."
-  },
-  {
-    id: "sf_recovery",
-    category: "Slow Flight",
-    type: "mcq",
-    difficulty: "medium",
-    question: "To recover from slow flight to cruise:",
-    options: ["Add full power, lower nose, clean up flaps (if any)", "Lower nose then add power", "Retract flaps then power", "Just level off"],
-    correctAnswer: "Add full power, lower nose, clean up flaps (if any)",
-    explanation: "Power is needed to accelerate. Lower nose to maintain altitude while accelerating."
-  },
-  {
-    id: "stall_spiral",
-    category: "Stalls",
-    type: "mcq",
-    difficulty: "hard",
-    question: "Is the airspeed low or high in a spiral dive?",
-    options: ["High and increasing", "Low and decreasing", "Constant", "Stalled"],
-    correctAnswer: "High and increasing",
-    explanation: "A spiral dive is NOT a stall. The wing is flying, airspeed is increasing rapidly, G-load is high."
-  },
-
-  // ==========================================
-  // TOPIC: PERFORMANCE (General)
-  // ==========================================
-  {
-    id: "perf_density",
-    category: "Performance",
-    type: "mcq",
-    difficulty: "medium",
-    question: "High Density Altitude (Hot/High/Humid) has what effect on takeoff distance?",
-    options: ["Increases distance", "Decreases distance", "No effect", "Improves climb"],
-    correctAnswer: "Increases distance",
-    explanation: "Less dense air reduces engine power, thrust, and lift."
-  },
-  {
-    id: "perf_ground_effect",
-    category: "Performance",
-    type: "mcq",
-    difficulty: "medium",
-    question: "Ground effect is caused by:",
-    options: ["Reduction of induced drag near the surface", "Increased air density near ground", "Wind shear", "Tire friction"],
-    correctAnswer: "Reduction of induced drag near the surface",
-    explanation: "Wingtip vortices are disrupted by the ground, reducing induced drag and increasing lift."
-  },
-  
-  // ==========================================
-  // TOPIC: ACRONYMS & PROCEDURES
-  // ==========================================
-  {
-    id: "acro_hasel",
-    category: "Procedures",
-    type: "input",
-    difficulty: "medium",
-    question: "HASEL Check: H stands for ______.",
-    correctAnswer: ["height"],
-    explanation: "Height: Ensure sufficient altitude for recovery (usually 2000' AGL min)."
-  },
-  {
-    id: "acro_clpat",
-    category: "Procedures",
-    type: "input",
-    difficulty: "medium",
-    question: "Pre-landing Check: CLPAT. P stands for ______.",
-    correctAnswer: ["power"],
-    explanation: "Power: Set for descent/approach."
-  }, 
-  {
-    id: "acro_freda",
-    category: "Procedures",
-    type: "input",
-    difficulty: "medium",
-    question: "Enroute Check: FREDA. F stands for ______.",
-    correctAnswer: ["fuel"],
-    explanation: "Fuel: Quantity, tank selection, balance."
-  },
-
-  // ==========================================
-  // TOPIC: STRAIGHT & LEVEL
-  // ==========================================
-  {
-    id: "sl_trim",
-    category: "Straight & Level",
-    type: "mcq",
-    difficulty: "medium",
-    question: "You are holding constant back pressure to maintain altitude. You should trim:",
-    options: ["Nose Up", "Nose Down", "Rudder Left", "Rudder Right"],
-    correctAnswer: "Nose Up",
-    explanation: "If you are pulling back, the nose is too heavy. Trim nose up to relieve that pressure."
-  },
-  {
-    id: "sl_speed",
-    category: "Straight & Level",
-    type: "mcq",
-    difficulty: "medium",
-    question: "To increase airspeed in straight and level flight, you add power. What else must you do?",
-    options: ["Apply forward pressure (lower nose) to maintain altitude", "Apply back pressure", "Trim nose up", "Nothing"],
-    correctAnswer: "Apply forward pressure (lower nose) to maintain altitude",
-    explanation: "Added power creates lift (and torque). To stop climbing, you must lower the pitch attitude."
-  },
-
-  // ==========================================
-  // TOPIC: RANGE & ENDURANCE
-  // ==========================================
-  {
-    id: "re_glide",
-    category: "Performance",
-    type: "mcq",
-    difficulty: "medium",
-    question: "Gliding for Range means using which speed?",
-    options: ["Best Glide (68)", "Minimum Sink Speed", "Stall Speed", "Vne"],
-    correctAnswer: "Best Glide (68)",
-    explanation: "Best Glide gives the best L/D ratio, meaning maximum horizontal distance for altitude lost."
-  },
-  {
-    id: "re_endure",
-    category: "Performance",
-    type: "mcq",
-    difficulty: "medium",
-    question: "Flying for Endurance means flying at the speed for:",
-    options: ["Minimum Power Required", "Minimum Drag", "Maximum Lift", "Maximum RPM"],
-    correctAnswer: "Minimum Power Required",
-    explanation: "Minimum power creates the lowest fuel flow per hour."
-  },
-
-  // ==========================================
-  // TOPIC: FORCE & LOAD
-  // ==========================================
-  {
-    id: "lf_spin",
-    category: "General Knowledge",
-    type: "input",
+    id: "perf_best_glide",
+    topic: "Performance",
     difficulty: "easy",
-    question: "The ratio of Lift to Weight is known as the ______ factor.",
-    correctAnswer: ["load"],
-    explanation: "Load Factor (G-Force)."
-  },
-  {
-    id: "lf_stall_speed",
-    category: "General Knowledge",
     type: "mcq",
-    difficulty: "hard",
-    question: "As bank angle increases, stall speed:",
-    options: ["Increases", "Decreases", "Stays same", "Is zero"],
-    correctAnswer: "Increases",
-    explanation: "Load factor increases in a turn. Stall speed increases with the square root of the load factor."
+    prompt: "Typical C172S best glide speed near max gross is:",
+    choices: ["68 KIAS", "55 KIAS", "85 KIAS", "105 KIAS"],
+    answer: "68 KIAS",
+    explanation: "68 KIAS is the common POH value for best glide in many C172S configs."
   },
-  
-  // ==========================================
-  // TOPIC: TAKEOFF BRIEFING
-  // ==========================================
   {
-    id: "to_brief",
-    category: "Takeoff",
+    id: "perf_range_endurance",
+    topic: "Performance",
+    difficulty: "medium",
     type: "matching",
-    difficulty: "medium",
-    question: "Match the emergency action to the phase of takeoff.",
+    prompt: "Match objective to speed concept.",
     pairs: [
-      { item: "Engine failure before rotation", match: "Idle, Brakes, Stop" },
-      { item: "Engine failure after rotation (runway remaining)", match: "Nose down, Land straight ahead" },
-      { item: "Engine failure at 500' AGL (no runway)", match: "Pick field 30deg either side of nose" }
-    ]
-  },
-  // Adding more simple fill-ins
-  {
-    id: "fill_asi_color",
-    category: "Instruments",
-    type: "input",
-    difficulty: "easy",
-    question: "The white arc on the ASI indicates the ______ operating range.",
-    correctAnswer: ["flap", "flaps"],
-    explanation: "White arc = Flap operating range (Vso to Vfe)."
+      { left: "Maximum gliding distance", right: "Best glide / best L/D" },
+      { left: "Maximum time aloft", right: "Minimum power required" },
+      { left: "Best climb over obstacle", right: "Vx" },
+      { left: "Best climb per minute", right: "Vy" }
+    ],
+    explanation: "Range and endurance are different optimization targets."
   },
   {
-    id: "fill_asi_green",
-    category: "Instruments",
-    type: "input",
-    difficulty: "easy",
-    question: "The green arc on the ASI indicates the ______ operating range.",
-    correctAnswer: ["normal"],
-    explanation: "Green arc = Normal operating range (Vs to Vno)."
-  },
-  {
-    id: "fill_asi_yellow",
-    category: "Instruments",
-    type: "input",
-    difficulty: "easy",
-    question: "The yellow arc on the ASI indicates the ______ range. (Only in smooth air)",
-    correctAnswer: ["caution"],
-    explanation: "Yellow arc = Caution range."
-  },
-   {
-    id: "fill_suction",
-    category: "Instruments",
-    type: "input",
+    id: "perf_density_altitude",
+    topic: "Performance",
     difficulty: "medium",
-    question: "Normal suction range for the vacuum system is usually between ______ and 5.4 in Hg.",
-    correctAnswer: ["4.5", "4.6", "4.8"], // Depending on manual, usually 4.5 or 4.8. Let's accept 4.5.
-    explanation: "Green arc on suction gauge is typically 4.5 to 5.4."
-  },
-  
-  // ==========================================
-  // TOPIC: YAW FACTORS (Propeller)
-  // ==========================================
-  {
-    id: "yaw_p_factor",
-    category: "Attitudes & Movements",
-    type: "mcq",
-    difficulty: "medium",
-    question: "P-Factor (Asymmetric Thrust) is most prominent when the aircraft is at:",
-    options: ["High AOA", "Low AOA", "High Speed", "Low Power"],
-    correctAnswer: "High AOA",
-    explanation: "At high AOA, the descending blade (right) takes a bigger bite of air than the ascending blade, creating left yaw."
+    type: "multi",
+    prompt: "High density altitude usually causes which outcomes?",
+    choices: ["Longer takeoff roll", "Reduced climb performance", "Higher true airspeed for same IAS", "Shorter landing roll always"],
+    answers: ["Longer takeoff roll", "Reduced climb performance", "Higher true airspeed for same IAS"],
+    explanation: "Hot/high conditions reduce performance and increase ground run risk."
   },
   {
-    id: "yaw_slipstream",
-    category: "Attitudes & Movements",
-    type: "mcq",
-    difficulty: "medium",
-    question: "Slipstream Effect pushes the tail to the right and nose to the left due to:",
-    options: ["Corkscrewing air hitting the vertical fin", "Torque of the engine", "Gyroscopic Precession", "Wind"],
-    correctAnswer: "Corkscrewing air hitting the vertical fin",
-    explanation: "The prop wash spirals around the fuselage and strikes the left side of the vertical fin."
-  },
-   {
-    id: "yaw_gyro",
-    category: "Attitudes & Movements",
-    type: "mcq",
+    id: "perf_turning_error",
+    topic: "Performance",
     difficulty: "hard",
-    question: "Gyroscopic Precession effects are mostly noticed in:",
-    options: ["Taildraggers on takeoff (lifting tail)", "C172s in cruise", "Gliders", "Jets"],
-    correctAnswer: "Taildraggers on takeoff (lifting tail)",
-    explanation: "Lifting the tail changes the plane of rotation, creating a force 90 degrees later. Less noticeable in tricycle gear aircraft."
+    type: "mcq",
+    prompt: "In a steepening level turn, if back pressure is not increased, what occurs first?",
+    choices: ["Altitude loss", "Instant stall", "Engine overspeed", "Heading gyro failure"],
+    answer: "Altitude loss",
+    explanation: "More bank increases load factor and required lift. Without added back pressure, the aircraft descends."
+  },
+  {
+    id: "perf_accel_compass",
+    topic: "Performance",
+    difficulty: "hard",
+    type: "mcq",
+    prompt: "On easterly or westerly headings in the northern hemisphere, accelerating causes the magnetic compass to indicate a turn toward:",
+    choices: ["North", "South", "East", "West"],
+    answer: "North",
+    explanation: "ANDS: Accelerate North, Decelerate South."
+  },
+
+  {
+    id: "c172_v_speeds",
+    topic: "C172S Specific",
+    difficulty: "easy",
+    type: "matching",
+    prompt: "Match each common C172S speed to its use (verify in your POH).",
+    pairs: [
+      { left: "Vr 55 KIAS", right: "Rotation speed" },
+      { left: "Vx 62 KIAS", right: "Best angle climb" },
+      { left: "Vy 74 KIAS", right: "Best rate climb" },
+      { left: "Vg 68 KIAS", right: "Best glide" }
+    ],
+    explanation: "Speeds vary with weight/configuration. Confirm against your own aircraft and checklist."
+  },
+  {
+    id: "c172_flap_limits",
+    topic: "C172S Specific",
+    difficulty: "medium",
+    type: "mcq",
+    prompt: "Typical flap operating limits in many C172S models are:",
+    choices: ["10 deg up to 110 KIAS; >10 deg up to 85 KIAS", "All flap settings up to 129 KIAS", "10 deg up to 85 KIAS only", "No speed limits for flaps"],
+    answer: "10 deg up to 110 KIAS; >10 deg up to 85 KIAS",
+    explanation: "Use POH and placards as final authority for your specific aircraft."
+  },
+  {
+    id: "c172_stall_recovery",
+    topic: "C172S Specific",
+    difficulty: "medium",
+    type: "sequence",
+    prompt: "Order a basic stall recovery flow for training context.",
+    items: [
+      "Reduce angle of attack",
+      "Apply full power smoothly",
+      "Level wings with coordinated controls",
+      "Retract flaps incrementally as recommended",
+      "Return to desired flight path"
+    ],
+    correctOrder: [
+      "Reduce angle of attack",
+      "Apply full power smoothly",
+      "Level wings with coordinated controls",
+      "Retract flaps incrementally as recommended",
+      "Return to desired flight path"
+    ],
+    explanation: "Priority is reducing AOA and regaining controlled flight."
+  },
+  {
+    id: "c172_slow_flight_focus",
+    topic: "C172S Specific",
+    difficulty: "medium",
+    type: "multi",
+    prompt: "In slow flight practice, which cues should prompt immediate correction?",
+    choices: ["Mushy controls", "Buffet or stall warning", "Uncoordinated slip/skid", "Cabin noise change only"],
+    answers: ["Mushy controls", "Buffet or stall warning", "Uncoordinated slip/skid"],
+    explanation: "Slow flight is a control and coordination exercise close to stall margins."
+  },
+  {
+    id: "c172_takeoff_abort",
+    topic: "C172S Specific",
+    difficulty: "hard",
+    type: "short",
+    prompt: "Before rotation, you lose expected acceleration. What is the practical action?",
+    answers: ["abort takeoff", "reject takeoff", "close throttle and stop"],
+    explanation: "If performance is not as expected before liftoff, reject on runway while runway remains."
+  },
+
+  {
+    id: "canadian_vfr_altitudes",
+    topic: "Canadian PPL Ops",
+    difficulty: "medium",
+    type: "mcq",
+    prompt: "For VFR cruising above 3000 AGL in Canada, easterly magnetic tracks generally use:",
+    choices: ["Odd thousands + 500 ft", "Even thousands + 500 ft", "Any altitude at pilot discretion", "Only odd thousands exact"],
+    answer: "Odd thousands + 500 ft",
+    explanation: "Semicircular cruising altitude rule applies by magnetic track direction."
+  },
+  {
+    id: "canadian_vfr_code",
+    topic: "Canadian PPL Ops",
+    difficulty: "easy",
+    type: "mcq",
+    prompt: "Typical VFR transponder code in Canada (unless assigned otherwise):",
+    choices: ["1200", "2000", "7500", "7700"],
+    answer: "1200",
+    explanation: "Use assigned codes when instructed; otherwise 1200 is common VFR squawk."
+  },
+  {
+    id: "canadian_docs",
+    topic: "Canadian PPL Ops",
+    difficulty: "medium",
+    type: "multi",
+    prompt: "Which aircraft documents should be on board and valid for normal private operations?",
+    choices: ["Certificate of Registration", "Certificate of Airworthiness", "Journey log (as required)", "Commercial operating certificate"],
+    answers: ["Certificate of Registration", "Certificate of Airworthiness", "Journey log (as required)"],
+    explanation: "Commercial operating certificate is not part of private training ops."
+  },
+  {
+    id: "canadian_circuit_radio",
+    topic: "Canadian PPL Ops",
+    difficulty: "hard",
+    type: "short",
+    prompt: "At an uncontrolled aerodrome, what is the core radio behavior in circuit?",
+    context: "Short practical phrase.",
+    answers: ["broadcast position and intentions clearly on the proper frequency", "make clear position and intention calls", "clear position and intentions"],
+    explanation: "Predictability and clear calls reduce collision risk in the circuit."
+  },
+  {
+    id: "canadian_commercial_exclusion",
+    topic: "Canadian PPL Ops",
+    difficulty: "easy",
+    type: "mcq",
+    prompt: "This trainer is designed for PPL practical knowledge. Which topic should be excluded?",
+    choices: ["Commercial revenue flight planning regulations", "Basic controlled/uncontrolled airspace awareness", "Takeoff and climb technique", "Pilot decision-making in training"],
+    answer: "Commercial revenue flight planning regulations",
+    explanation: "Your requested scope excludes commercial pilot knowledge."
+  },
+
+  {
+    id: "practical_takeoff_brief",
+    topic: "Practical Flying",
+    difficulty: "medium",
+    type: "sequence",
+    prompt: "Order a concise takeoff briefing flow for training flights.",
+    items: [
+      "Runway and departure path",
+      "Rotation/climb speeds",
+      "Abort point and rejected takeoff plan",
+      "Engine failure actions after liftoff",
+      "Any local threat or weather note"
+    ],
+    correctOrder: [
+      "Runway and departure path",
+      "Rotation/climb speeds",
+      "Abort point and rejected takeoff plan",
+      "Engine failure actions after liftoff",
+      "Any local threat or weather note"
+    ],
+    explanation: "A short, repeatable briefing improves reaction speed under stress."
+  },
+  {
+    id: "practical_go_around",
+    topic: "Practical Flying",
+    difficulty: "medium",
+    type: "mcq",
+    prompt: "If approach becomes unstable, the safest default action is:",
+    choices: ["Go around early", "Force the landing", "Slip aggressively below limits", "Delay decision until flare"],
+    answer: "Go around early",
+    explanation: "A timely go-around is a strong airmanship decision, not a failure."
+  },
+  {
+    id: "practical_trim",
+    topic: "Practical Flying",
+    difficulty: "easy",
+    type: "short",
+    prompt: "Finish the phrase: Attitude, power, ______.",
+    answers: ["trim"],
+    explanation: "This sequence supports stable control and low workload."
+  },
+  {
+    id: "practical_checklist_discipline",
+    topic: "Practical Flying",
+    difficulty: "medium",
+    type: "multi",
+    prompt: "Good checklist discipline includes:",
+    choices: ["Challenge-response verification", "Rushing to avoid delaying others", "Using flows then checklist backup", "Stopping if interrupted and re-anchoring"],
+    answers: ["Challenge-response verification", "Using flows then checklist backup", "Stopping if interrupted and re-anchoring"],
+    explanation: "Checklist discipline is a major threat-management tool."
+  },
+  {
+    id: "practical_workload",
+    topic: "Practical Flying",
+    difficulty: "hard",
+    type: "mcq",
+    prompt: "During high workload in circuit, what should be prioritized first?",
+    choices: ["Aviate, navigate, communicate", "Talk first to reduce pressure", "Tune avionics menus", "Recalculate fuel burn"],
+    answer: "Aviate, navigate, communicate",
+    explanation: "Control and flight path always come first."
+  },
+
+  {
+    id: "perf_turn_radius",
+    topic: "Performance",
+    difficulty: "hard",
+    type: "mcq",
+    prompt: "At the same true airspeed, increasing bank angle generally causes turn radius to:",
+    choices: ["Decrease", "Increase", "Stay unchanged", "Become random"],
+    answer: "Decrease",
+    explanation: "More bank increases horizontal lift component, tightening the turn."
+  },
+  {
+    id: "man_power_pitch_relationship",
+    topic: "Flight Maneuvers",
+    difficulty: "medium",
+    type: "mcq",
+    prompt: "In many training contexts, a practical memory aid is:",
+    choices: ["Pitch for speed, power for altitude/rate", "Pitch for heading, power for trim", "Rudder for climb, aileron for descent", "Flaps for cruise performance"],
+    answer: "Pitch for speed, power for altitude/rate",
+    explanation: "Use this as a teaching model, while respecting exact phase-of-flight technique from your instructor."
+  },
+  {
+    id: "c172_stall_types",
+    topic: "C172S Specific",
+    difficulty: "medium",
+    type: "matching",
+    prompt: "Match stall context to typical setup cue.",
+    pairs: [
+      { left: "Power-off approach stall", right: "Landing-like configuration, decelerating" },
+      { left: "Power-on departure stall", right: "Takeoff-like attitude with higher power" },
+      { left: "Accelerated stall", right: "Higher load factor (e.g., steep turn)" }
+    ],
+    explanation: "Different triggers, same core recovery priority: reduce AOA and regain control."
+  },
+  {
+    id: "canadian_metar_read",
+    topic: "Canadian PPL Ops",
+    difficulty: "hard",
+    type: "short",
+    prompt: "In a METAR, what does the altimeter group beginning with 'A' represent?",
+    answers: ["altimeter setting in inches of mercury", "altimeter setting", "pressure setting"],
+    explanation: "In Canadian METAR format, A2992 means 29.92 inHg altimeter setting."
+  },
+  {
+    id: "practical_pre_takeoff",
+    topic: "Practical Flying",
+    difficulty: "easy",
+    type: "multi",
+    prompt: "Before takeoff roll, confirm at minimum:",
+    choices: ["Runway identification", "Engine instruments in range", "Takeoff briefing complete", "Cabin music playlist"],
+    answers: ["Runway identification", "Engine instruments in range", "Takeoff briefing complete"],
+    explanation: "Final before-takeoff checks prevent high-consequence errors."
   }
 ];
