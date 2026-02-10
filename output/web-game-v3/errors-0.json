@@ -1,0 +1,6 @@
+[
+  {
+    "type": "pageerror",
+    "text": "Uncaught ReferenceError: updateCountCopy is not defined"
+  }
+]

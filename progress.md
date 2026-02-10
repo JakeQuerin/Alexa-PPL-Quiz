@@ -33,3 +33,17 @@ Patch:
 Patch:
 - Corrected turn-coordination question answer/explanation (ball-right cue now maps to right rudder).
 - Re-ran syntax check and Playwright client loop post-fix.
+
+Major expansion (requested features):
+- Added spaced repetition queue and immediate missed-item reinsertion.
+- Added cockpit relevance card after answer checks.
+- Added stage-based presets and smart session generator with lesson focus bias.
+- Added long-term history dashboard and review queue summary.
+- Added branching scenario drills.
+- Added contextual short-answer scoring with semantic rubric + optional external LLM hook (`window.flightLabShortAnswerScorer`).
+- Added oral rapid-fire mode with timer and self-mark flow.
+
+Testing updates:
+- Fixed runtime regression (`updateCountCopy` missing).
+- Playwright client run passes with state output in `output/web-game-v4`.
+- Additional targeted Playwright check confirms oral mode starts and exports state/artifacts in `output/manual-checks`.

@@ -406,3 +406,175 @@ const QUESTION_BANK = [
     explanation: "Final before-takeoff checks prevent high-consequence errors."
   }
 ];
+
+const STAGE_PRESETS = [
+  {
+    id: 'custom',
+    label: 'Custom',
+    topics: null,
+    difficulty: 'mixed',
+    count: 12,
+    note: 'Manual setup.'
+  },
+  {
+    id: 'pre_solo',
+    label: 'Pre-Solo Foundations',
+    topics: ['Attitudes & Movements', 'Flight Maneuvers', 'Practical Flying', 'C172S Specific'],
+    difficulty: 'easy',
+    count: 12,
+    note: 'Control fundamentals, checks, and stable approach habits.'
+  },
+  {
+    id: 'circuit_focus',
+    label: 'Circuit Focus',
+    topics: ['Flight Maneuvers', 'Practical Flying', 'C172S Specific', 'Canadian PPL Ops'],
+    difficulty: 'medium',
+    count: 16,
+    note: 'Takeoff, climb, circuit radio, and go-around decisions.'
+  },
+  {
+    id: 'upper_airwork',
+    label: 'Upper Airwork',
+    topics: ['Attitudes & Movements', 'Flight Maneuvers', 'C172S Specific', 'Performance'],
+    difficulty: 'medium',
+    count: 16,
+    note: 'Slow flight, stalls, coordination, and energy management.'
+  },
+  {
+    id: 'pre_written',
+    label: 'Pre-Written / Oral',
+    topics: ['Canadian PPL Ops', 'Performance', 'Practical Flying', 'C172S Specific'],
+    difficulty: 'mixed',
+    count: 20,
+    note: 'Exam-style knowledge with practical application prompts.'
+  }
+];
+
+const LESSON_FOCUS_OPTIONS = [
+  { id: 'mixed', label: 'General Mixed Review', topicBias: [] },
+  { id: 'circuit', label: 'Tomorrow: Circuit Lesson', topicBias: ['Flight Maneuvers', 'Practical Flying', 'Canadian PPL Ops'] },
+  { id: 'takeoff_climb', label: 'Takeoff & Climb Focus', topicBias: ['C172S Specific', 'Flight Maneuvers', 'Performance'] },
+  { id: 'slow_stall', label: 'Slow Flight & Stalls', topicBias: ['C172S Specific', 'Attitudes & Movements', 'Flight Maneuvers'] },
+  { id: 'ops_radio', label: 'Ops & Radio', topicBias: ['Canadian PPL Ops', 'Practical Flying'] }
+];
+
+const COCKPIT_TIP_BY_TOPIC = {
+  'Attitudes & Movements': 'Poor coordination raises drag and workload fast. Catch yaw/roll errors early so trim and power changes stay predictable.',
+  'Flight Maneuvers': 'Most training deviations come from skipping the attitude-power-trim loop. Small corrections and fast rescan beat big late inputs.',
+  'Performance': 'Performance errors are usually planning errors. Treat density altitude, weight, and bank angle as decision inputs before takeoff.',
+  'C172S Specific': 'C172S numbers are memory items only if they drive action. Call out the speed, then fly the attitude that protects it.',
+  'Canadian PPL Ops': 'Radio and legal basics matter because they reduce conflict and ambiguity. Clear, early calls buy you time in busy circuits.',
+  'Practical Flying': 'Aviation decisions compound. Good briefings and checklist discipline prevent rushed, high-consequence fixes close to the ground.'
+};
+
+const SHORT_ANSWER_RUBRICS = {
+  att_adverse_yaw_fix: {
+    threshold: 0.65,
+    concepts: [
+      { label: 'Identifies adverse yaw', terms: ['adverse yaw'] },
+      { label: 'Uses rudder with turn direction', terms: ['left rudder', 'rudder in direction of turn', 'coordinated rudder'] }
+    ]
+  },
+  man_turn_coordination: {
+    threshold: 0.6,
+    concepts: [
+      { label: 'Step on the ball concept', terms: ['step on the ball', 'ball right'] },
+      { label: 'Right rudder correction', terms: ['right rudder', 'apply right rudder'] }
+    ]
+  },
+  c172_takeoff_abort: {
+    threshold: 0.65,
+    concepts: [
+      { label: 'Reject/abort before rotation', terms: ['abort', 'reject'] },
+      { label: 'Stop aircraft safely', terms: ['close throttle', 'brake', 'stop'] }
+    ]
+  },
+  canadian_circuit_radio: {
+    threshold: 0.65,
+    concepts: [
+      { label: 'Position callouts', terms: ['position', 'where you are'] },
+      { label: 'Intentions callouts', terms: ['intention', 'what you will do'] },
+      { label: 'Correct frequency and clarity', terms: ['frequency', 'clear', 'broadcast'] }
+    ]
+  },
+  practical_trim: {
+    threshold: 1,
+    concepts: [
+      { label: 'Trim', terms: ['trim'] }
+    ]
+  },
+  canadian_metar_read: {
+    threshold: 0.66,
+    concepts: [
+      { label: 'Altimeter setting', terms: ['altimeter setting', 'pressure setting'] },
+      { label: 'inHg unit', terms: ['inches of mercury', 'inhg'] }
+    ]
+  }
+};
+
+const SCENARIO_DRILLS = [
+  {
+    id: 'scenario_unstable_approach',
+    topic: 'Practical Flying',
+    difficulty: 'hard',
+    type: 'scenario',
+    prompt: 'Scenario: You are on final in a C172S, 10 knots fast, drifting right, and still descending below glidepath. What do you do?',
+    context: 'Make decisions step-by-step.',
+    passScore: 0.68,
+    startNode: 'n1',
+    nodes: {
+      n1: {
+        prompt: 'Final approach unstable below 500 AGL. Immediate decision?',
+        choices: [
+          { id: 'go', text: 'Initiate go-around now', next: 'n2', score: 1, coach: 'Good call. Early go-around is strong judgment.' },
+          { id: 'force', text: 'Try to salvage with aggressive slip + power', next: 'bad_end', score: 0.2, coach: 'High-risk near ground. This compounds instability.' }
+        ]
+      },
+      n2: {
+        prompt: 'During go-around, aircraft yaws left strongly at full power. What next?',
+        choices: [
+          { id: 'coord', text: 'Apply right rudder, manage pitch for climb, clean up flaps by procedure', next: 'good_end', score: 1, coach: 'Coordinated go-around control is correct.' },
+          { id: 'ignore', text: 'Hold heading with aileron only and keep full flaps', next: 'bad_end', score: 0.2, coach: 'Uncoordinated and high drag; poor climb safety margin.' }
+        ]
+      },
+      good_end: {
+        terminal: true,
+        summary: 'Safe outcome: stabilized go-around and rejoin circuit.'
+      },
+      bad_end: {
+        terminal: true,
+        summary: 'Unsafe chain: unstable approach management increased risk close to the ground.'
+      }
+    },
+    explanation: 'Approach stability gates should be pre-briefed. Early go-around beats late correction every time.'
+  },
+  {
+    id: 'scenario_partial_power_takeoff',
+    topic: 'C172S Specific',
+    difficulty: 'hard',
+    type: 'scenario',
+    prompt: 'Scenario: On takeoff roll, acceleration feels weak and RPM is below expected. Decide through the sequence.',
+    context: 'Apply practical reject criteria.',
+    passScore: 0.7,
+    startNode: 's1',
+    nodes: {
+      s1: {
+        prompt: 'Before rotation speed, acceleration abnormal. Best action?',
+        choices: [
+          { id: 'reject', text: 'Reject takeoff, close throttle, maintain directional control, stop', next: 's2', score: 1, coach: 'Correct. Reject while runway remains.' },
+          { id: 'continue', text: 'Continue and evaluate after liftoff', next: 'bad_end', score: 0.1, coach: 'Unsafe. You are choosing uncertainty at low altitude.' }
+        ]
+      },
+      s2: {
+        prompt: 'Aircraft stopped safely. Next priority?',
+        choices: [
+          { id: 'secure', text: 'Clear runway when safe, run checklist/troubleshooting', next: 'good_end', score: 1, coach: 'Correct sequencing and threat management.' },
+          { id: 'rush', text: 'Immediate second takeoff attempt without diagnosis', next: 'bad_end', score: 0.1, coach: 'Poor risk control.' }
+        ]
+      },
+      good_end: { terminal: true, summary: 'Safe outcome: reject criteria respected and hazard contained.' },
+      bad_end: { terminal: true, summary: 'Unsafe outcome: weak performance cue ignored.' }
+    },
+    explanation: 'Rejected takeoff discipline is a core private-pilot safety behavior.'
+  }
+];
