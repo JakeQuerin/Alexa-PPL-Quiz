@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
       scorePoints: 0,
       possiblePoints: 0,
       topicStats: {},
+      combo: 0,
+      maxCombo: 0,
       repeatedIds: new Set()
     },
     oral: {
@@ -108,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
     historyDashboard: document.getElementById('history-dashboard'),
     reviewQueueSummary: document.getElementById('review-queue-summary'),
     restartBtn: document.getElementById('restart-btn'),
-    retryWeakBtn: document.getElementById('retry-weak-btn')
+    retryWeakBtn: document.getElementById('retry-weak-btn'),
+    comboBadge: null
   };
 
   init();
@@ -118,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     populateStageSelect();
     populateLessonFocusSelect();
     renderTopicButtons();
+    setupArcadeBadge();
     bindEvents();
     updateCountCopy();
     updateSessionLabel();
@@ -382,7 +386,10 @@ document.addEventListener('DOMContentLoaded', () => {
     state.quiz.scorePoints = 0;
     state.quiz.possiblePoints = sessionQuestions.reduce((sum, q) => sum + questionWeight(q), 0);
     state.quiz.topicStats = buildTopicStats(sessionQuestions);
+    state.quiz.combo = 0;
+    state.quiz.maxCombo = 0;
     state.quiz.repeatedIds = new Set();
+    updateComboBadge();
 
     switchView('quiz');
     updateSessionLabel();
@@ -489,6 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cockpitTip = question.cockpitTip || COCKPIT_TIP_BY_TOPIC[question.topic] || 'Translate this concept to a clear trigger-action phrase you can execute in flight.';
       els.cockpitCard.classList.remove('hidden');
       els.cockpitText.textContent = cockpitTip;
+      playStickySlide(els.cockpitCard);
     } else {
       els.cockpitCard.classList.add('hidden');
       els.cockpitText.textContent = '';
@@ -831,6 +839,18 @@ document.addEventListener('DOMContentLoaded', () => {
       response.accounted = true;
     }
 
+    if (evaluation.correct) {
+      state.quiz.combo += 1;
+      state.quiz.maxCombo = Math.max(state.quiz.maxCombo, state.quiz.combo);
+      playComboEffect();
+      if (state.quiz.combo >= 3 && state.quiz.combo % 3 === 0) {
+        spawnConfettiBurst(22);
+      }
+    } else {
+      state.quiz.combo = 0;
+    }
+    updateComboBadge();
+
     if (state.config.spacedRepetition) {
       updateSrs(baseQuestionId(question), evaluation.score);
       if (evaluation.score < 0.65) {
@@ -1144,11 +1164,15 @@ document.addEventListener('DOMContentLoaded', () => {
     renderResults({
       mode: 'quiz',
       percentage,
-      summary: `${correctCount} / ${state.quiz.questions.length} correct | ${state.quiz.scorePoints.toFixed(1)} / ${state.quiz.possiblePoints.toFixed(1)} weighted points`,
+      summary: `${correctCount} / ${state.quiz.questions.length} correct | ${state.quiz.scorePoints.toFixed(1)} / ${state.quiz.possiblePoints.toFixed(1)} weighted points | Max combo x${state.quiz.maxCombo}`,
       guidance,
       topicStats: state.quiz.topicStats,
       missed: buildMissedEntries()
     });
+
+    if (percentage >= 85) {
+      spawnConfettiBurst(48);
+    }
 
     saveHistoryEntry({
       mode: 'quiz',
@@ -1262,6 +1286,10 @@ document.addEventListener('DOMContentLoaded', () => {
       topicStats: state.oral.topicStats,
       missed: []
     });
+
+    if (percentage >= 85) {
+      spawnConfettiBurst(42);
+    }
 
     saveHistoryEntry({
       mode: 'oral',
@@ -1536,6 +1564,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.requestAnimationFrame(() => active.classList.add('view-swap'));
     }
     state.view = viewName;
+    updateComboBadge();
   }
 
   function animateQuestionEntrance() {
@@ -1552,6 +1581,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function playStickySlide(element) {
+    if (!element) return;
+    element.classList.remove('sticky-slide-in');
+    window.requestAnimationFrame(() => element.classList.add('sticky-slide-in'));
+  }
+
   function updateSessionLabel() {
     if (state.view === 'quiz') {
       els.sessionModeDisplay.textContent = 'In flight';
@@ -1562,6 +1597,58 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       els.sessionModeDisplay.textContent = 'Briefing';
     }
+  }
+
+  function setupArcadeBadge() {
+    const host = document.querySelector('.topbar-stats');
+    if (!host) return;
+    const badge = document.createElement('div');
+    badge.className = 'combo-badge hidden';
+    badge.id = 'combo-badge';
+    badge.textContent = 'Combo x0';
+    host.appendChild(badge);
+    els.comboBadge = badge;
+  }
+
+  function updateComboBadge() {
+    if (!els.comboBadge || state.view !== 'quiz') {
+      if (els.comboBadge) els.comboBadge.classList.add('hidden');
+      return;
+    }
+    if (state.quiz.combo <= 0) {
+      els.comboBadge.classList.add('hidden');
+      return;
+    }
+    els.comboBadge.textContent = `Combo x${state.quiz.combo}`;
+    els.comboBadge.classList.remove('hidden');
+  }
+
+  function playComboEffect() {
+    if (!els.comboBadge) return;
+    els.comboBadge.classList.remove('combo-pop');
+    window.requestAnimationFrame(() => els.comboBadge.classList.add('combo-pop'));
+  }
+
+  function spawnConfettiBurst(pieces = 24) {
+    const layer = document.createElement('div');
+    layer.className = 'confetti-layer';
+    document.body.appendChild(layer);
+
+    const colors = ['#ff9fc1', '#ffdca8', '#b7e7ff', '#c8f5d1', '#d7c7ff', '#ffcfa8'];
+    for (let i = 0; i < pieces; i += 1) {
+      const piece = document.createElement('span');
+      piece.className = 'confetti-piece';
+      piece.style.left = `${42 + Math.random() * 16}%`;
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.setProperty('--drift', `${-180 + Math.random() * 360}px`);
+      piece.style.setProperty('--drop', `${220 + Math.random() * 260}px`);
+      piece.style.animationDelay = `${Math.random() * 120}ms`;
+      layer.appendChild(piece);
+    }
+
+    window.setTimeout(() => {
+      layer.remove();
+    }, 1300);
   }
 
   function currentQuestion() {

@@ -56,3 +56,30 @@ Visual polish pass:
 Validation:
 - Playwright run on polished style generated screenshots/state in `output/web-game-style-v1`.
 - Additional interaction check confirms post-answer feedback state captured in `output/manual-checks/animated-feedback.*`.
+
+Visual style switch:
+- Replaced Hangar Pop theme with Cockpit Neo (dark glass-cockpit palette, instrument-grid atmosphere, premium smooth motion).
+- Preserved interaction classes and animation hooks used by script.js.
+- Verified with Playwright screenshots/state output in `output/web-game-cockpit-neo`.
+
+Visual style switch:
+- Replaced Cockpit Neo with Pilot Notebook (warm paper palette, lined notebook texture, checklist/highlighter accents, and softer stamp/page transitions).
+- Verified with Playwright artifacts in `output/web-game-pilot-notebook`.
+
+Pilot Notebook refinement:
+- Added stronger notebook identity details: pencil icon in eyebrow label, tape accents on cards, and sticky-note tape corners.
+- Enhanced motion to match requested style: page-turn transition depth, sticky-note slide-in for cockpit card, stamp-like feedback impact, and gentle bounce on option interactions.
+- Revalidated with Playwright artifacts in `output/web-game-pilot-notebook-v2` and `output/manual-checks/pilot-notebook-motion-v2.*`.
+
+Visual style switch:
+- Replaced Pilot Notebook with Arcade Flight School theme: retro-modern palette, bold gradients, reward/badge styling, and high-energy interaction styling.
+- Added combo streak system in script.js with topbar combo badge and pop animation.
+- Added confetti burst utility for combo milestones and high-score session finishes.
+- Added lively hover wiggle and snappy spring-style transitions in CSS.
+- Verified with Playwright artifacts in `output/web-game-arcade-flight-school` and targeted interaction capture in `output/manual-checks/arcade-flight-school-feedback.*`.
+
+Visual style switch:
+- Replaced Arcade Flight School with Hangar Pop pastel theme.
+- Kept springy playful motion (card pop-ins, bouncy success feedback, springy button presses, playful progress pulse).
+- Pastelized palette across background/cards/chips/buttons and adjusted confetti colors to pastel tones.
+- Verified with Playwright artifacts in `output/web-game-hangar-pop-pastel` and post-answer capture in `output/manual-checks/hangar-pop-pastel-feedback.*`.
